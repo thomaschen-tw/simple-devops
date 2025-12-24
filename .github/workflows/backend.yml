@@ -1,80 +1,112 @@
+# 后端 CI/CD 工作流
+# 当 backend-fastapi 目录下的文件变更时，自动运行测试、构建镜像并推送到 GHCR
+
 name: backend-ci
 
+# 触发条件：什么时候运行这个工作流
 on:
   push:
+    # 只在这些路径变更时触发（节省 CI 资源）
     paths:
-      - "backend-fastapi/**"
-      - ".github/workflows/backend.yml"
-    branches: ["main", "master"]
+      - "backend-fastapi/**"           # 后端代码变更
+      - ".github/workflows/backend.yml" # 工作流文件本身变更
+    branches: ["main", "master"]        # 只在主分支
   pull_request:
+    # PR 时也检查这些路径
     paths:
       - "backend-fastapi/**"
       - ".github/workflows/backend.yml"
 
+# 全局环境变量（所有 job 都可以使用）
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/backend
+  REGISTRY: ghcr.io                                    # GitHub Container Registry
+  IMAGE_NAME: ${{ github.repository }}/backend        # 镜像名称：用户名/仓库名/backend
 
+# 定义任务（jobs）
 jobs:
+  # 任务 1：运行测试
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 在 Ubuntu 最新版本上运行
+    
+    # 默认工作目录
     defaults:
       run:
         working-directory: backend-fastapi
+    
+    # 执行步骤
     steps:
+      # 步骤 1：拉取代码
       - uses: actions/checkout@v4
+      
+      # 步骤 2：设置 Python 环境
       - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      
+      # 步骤 3：安装依赖
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+      
+      # 步骤 4：运行测试
       - name: Run tests
         env:
-          # 设置一个不会真正连接的 DATABASE_URL，避免测试时连接数据库
-          # 健康检查测试不需要数据库连接
+          # 设置假的数据库地址，避免测试时真的连接数据库
           DATABASE_URL: "postgresql+psycopg://test:test@localhost:5432/test"
         run: |
-          # 设置 PYTHONPATH 以便导入 app 模块
+          # 设置 Python 路径，让 pytest 能找到 app 模块
           export PYTHONPATH="${PYTHONPATH}:${GITHUB_WORKSPACE}/backend-fastapi"
           pytest -v
-        # Note: Current tests don't require a database connection.
-        # If you add database-dependent tests, add a Postgres service here.
 
+  # 任务 2：构建并推送镜像（只有测试通过后才执行）
   build-and-push:
-    needs: test
+    needs: test  # 依赖 test 任务，只有测试通过才执行
+    
     runs-on: ubuntu-latest
+    
+    # 权限配置：需要推送镜像到 GHCR
     permissions:
-      contents: read
-      packages: write
-      id-token: write
-      # 删除旧版本需要 packages: write 权限（已包含）
+      contents: read      # 读取代码
+      packages: write     # 推送镜像
+      id-token: write    # OIDC 认证
+    
     steps:
+      # 步骤 1：拉取代码
       - uses: actions/checkout@v4
+      
+      # 步骤 2：登录到 GHCR（GitHub Container Registry）
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
+          username: ${{ github.actor }}              # GitHub 用户名
+          password: ${{ secrets.GITHUB_TOKEN }}     # 自动生成的 token
+      
+      # 步骤 3：设置 Docker Buildx（支持多平台构建）
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      # 步骤 4：构建并推送镜像
+      - name: Build and push (multi-platform)
         uses: docker/build-push-action@v6
         with:
-          context: ./backend-fastapi
-          push: ${{ github.event_name != 'pull_request' }}
+          context: ./backend-fastapi              # Dockerfile 所在目录
+          platforms: linux/amd64,linux/arm64      # 构建两个平台的镜像（Intel + Apple Silicon）
+          push: ${{ github.event_name != 'pull_request' }}  # PR 时不推送，只构建
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest        # 最新版本标签
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}  # 提交 SHA 标签
+          cache-from: type=gha   # 使用 GitHub Actions 缓存加速构建
+          cache-to: type=gha,mode=max
       
+      # 步骤 5：删除旧版本镜像（保留最新 10 个）
       - name: Delete old package versions
-        if: github.event_name != 'pull_request'
-        continue-on-error: true
+        if: github.event_name != 'pull_request'  # PR 时不删除
+        continue-on-error: true                   # 失败也不影响整体流程
         uses: actions/delete-package-versions@v5
         with:
           package-name: backend
           package-type: 'container'
-          min-versions-to-keep: 10
-          delete-only-untagged-versions: false
-
+          min-versions-to-keep: 10                # 保留最新 10 个版本

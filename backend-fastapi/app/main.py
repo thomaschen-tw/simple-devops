@@ -14,10 +14,15 @@ from .routes import router
 
 app = FastAPI(title="Blog API", version="0.1.0")
 
-# Allow the Vite dev server to call the API from localhost.
+# Allow the Vite dev server and Docker containers to call the API.
+# In Docker, frontend accesses backend via http://localhost:8000 from browser
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:30080",  # K8s NodePort
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

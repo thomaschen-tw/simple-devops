@@ -1,9 +1,13 @@
+# 前端 CI/CD 工作流
+# 当 frontend-react 目录下的文件变更时，自动构建、测试并推送镜像到 GHCR
+
 name: frontend-ci
 
+# 触发条件
 on:
   push:
     paths:
-      - "frontend-react/**"
+      - "frontend-react/**"           # 前端代码变更
       - ".github/workflows/frontend.yml"
     branches: ["main", "master"]
   pull_request:
@@ -11,53 +15,84 @@ on:
       - "frontend-react/**"
       - ".github/workflows/frontend.yml"
 
+# 全局环境变量
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/frontend
 
 jobs:
+  # 任务 1：构建和测试前端代码
   build-and-test:
     runs-on: ubuntu-latest
+    
     defaults:
       run:
         working-directory: frontend-react
+    
     steps:
+      # 拉取代码
       - uses: actions/checkout@v4
+      
+      # 设置 Node.js 环境
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: "20"                      # 使用 Node.js 20
+          cache: "npm"                             # 缓存 npm 依赖，加速安装
           cache-dependency-path: frontend-react/package-lock.json
+      
+      # 安装依赖
       - run: npm install
+      
+      # 构建项目（会检查是否有错误）
       - run: npm run build
 
+  # 任务 2：构建并推送 Docker 镜像
   build-and-push:
-    needs: build-and-test
+    needs: build-and-test  # 只有构建成功才执行
+    
     runs-on: ubuntu-latest
+    
     permissions:
       contents: read
       packages: write
       id-token: write
+    
     steps:
+      # 拉取代码
       - uses: actions/checkout@v4
+      
+      # 登录 GHCR
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push image
+      
+      # 设置多平台构建支持
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      # 构建并推送镜像
+      - name: Build and push image (multi-platform)
         uses: docker/build-push-action@v6
         with:
           context: ./frontend-react
+          platforms: linux/amd64,linux/arm64      # 支持 Intel 和 Apple Silicon
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          # 构建参数：设置前端 API 地址
+          # 注意：浏览器从宿主机访问，所以用 localhost，不能用容器服务名
           build-args: |
-            VITE_API_BASE_URL=http://backend:8000
+            VITE_API_BASE_URL=http://localhost:8000
+          # 使用缓存加速构建
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       
+      # 删除旧版本（保留最新 10 个）
       - name: Delete old package versions
         if: github.event_name != 'pull_request'
         continue-on-error: true
@@ -66,5 +101,3 @@ jobs:
           package-name: frontend
           package-type: 'container'
           min-versions-to-keep: 10
-          delete-only-untagged-versions: false
-

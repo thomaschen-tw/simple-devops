@@ -1,8 +1,6 @@
 # 生产环境 Docker Compose 配置
 # 使用 GitHub Actions 构建并推送到 GHCR 的镜像
-# 使用方法：docker compose -f docker-compose.prod.yml up -d
-
-version: "3.9"
+# 使用方法：docker-compose -f docker-compose.prod.yml up -d
 
 services:
   postgres:
@@ -27,8 +25,12 @@ services:
     # 替换 YOUR_GITHUB_USERNAME 和 YOUR_REPO 为你的实际 GitHub 用户名和仓库名
     # GitHub Actions 会自动构建镜像为: ghcr.io/username/repo/backend:latest
     # 例如：image: ghcr.io/thomaschen-tw/simple-devops/backend:latest
-    image: ghcr.io/YOUR_GITHUB_USERNAME/YOUR_REPO/backend:latest
+    #image: ghcr.io/YOUR_GITHUB_USERNAME/YOUR_REPO/backend:latest
+    image: ghcr.io/thomaschen-tw/simple-devops/backend:latest
     container_name: blog-backend
+    # 多平台支持：GitHub Actions 现在构建 amd64 + arm64 镜像
+    # 在 Apple Silicon 上会自动使用 arm64 镜像，无需模拟
+    # platform: linux/amd64  # 注释掉，让 Docker 自动选择
     environment:
       # 数据库连接自动配置，无需手动 export
       DATABASE_URL: postgresql+psycopg://demo:demo@postgres:5432/demo
@@ -39,17 +41,23 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      # 使用 Python 的 http.client 而不是 curl（容器中没有 curl）
+      test: ["CMD", "python", "-c", "import http.client; conn = http.client.HTTPConnection('localhost', 8000); conn.request('GET', '/healthz'); r = conn.getresponse(); exit(0 if r.status == 200 else 1)"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s  # 给启动脚本足够时间初始化数据库
 
   frontend:
     # 替换 YOUR_GITHUB_USERNAME 和 YOUR_REPO 为你的实际 GitHub 用户名和仓库名
     # GitHub Actions 会自动构建镜像为: ghcr.io/username/repo/frontend:latest
     # 例如：image: ghcr.io/thomaschen-tw/simple-devops/frontend:latest
-    image: ghcr.io/YOUR_GITHUB_USERNAME/YOUR_REPO/frontend:latest
+    #image: ghcr.io/YOUR_GITHUB_USERNAME/YOUR_REPO/frontend:latest
+    image: ghcr.io/thomaschen-tw/simple-devops/frontend:latest
     container_name: blog-frontend
+    # 多平台支持：GitHub Actions 现在构建 amd64 + arm64 镜像
+    # 在 Apple Silicon 上会自动使用 arm64 镜像，无需模拟
+    # platform: linux/amd64  # 注释掉，让 Docker 自动选择
     ports:
       - "5173:80"
     depends_on:
