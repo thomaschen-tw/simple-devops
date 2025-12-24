@@ -32,7 +32,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run tests
-        run: pytest
+        run: |
+          # 设置 PYTHONPATH 以便导入 app 模块
+          export PYTHONPATH="${PYTHONPATH}:${GITHUB_WORKSPACE}/backend-fastapi"
+          pytest
         # Note: Current tests don't require a database connection.
         # If you add database-dependent tests, add a Postgres service here.
 
@@ -43,6 +46,7 @@ jobs:
       contents: read
       packages: write
       id-token: write
+      # 删除旧版本需要 packages: write 权限（已包含）
     steps:
       - uses: actions/checkout@v4
       - name: Log in to GHCR
@@ -59,4 +63,13 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+      
+      - name: Delete old package versions
+        if: github.event_name != 'pull_request'
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: backend
+          package-type: 'container'
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: false
 

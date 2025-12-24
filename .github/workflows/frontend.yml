@@ -57,4 +57,13 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           build-args: |
             VITE_API_BASE_URL=http://backend:8000
+      
+      - name: Delete old package versions
+        if: github.event_name != 'pull_request'
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: frontend
+          package-type: 'container'
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: false
 

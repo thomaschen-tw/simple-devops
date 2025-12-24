@@ -1,0 +1,36 @@
+name: docs-ci
+
+# 文档更新 workflow：只更新文档时不触发前后端构建
+on:
+  push:
+    paths:
+      - "*.md"
+      - "**/*.md"
+      - "docs/**"
+      - ".github/workflows/docs.yml"
+    branches: ["main", "master"]
+  pull_request:
+    paths:
+      - "*.md"
+      - "**/*.md"
+      - "docs/**"
+      - ".github/workflows/docs.yml"
+
+jobs:
+  # 简单的文档检查工作（可选：可以添加 markdown lint 等）
+  check-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check markdown files
+        run: |
+          echo "📝 文档文件已更新，跳过前后端构建"
+          echo "更新的文档文件："
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E '\.(md|MD)$' || echo "无文档文件变更"
+      
+      - name: Documentation summary
+        run: |
+          echo "✅ 文档更新完成"
+          echo "ℹ️  只更新文档时不会触发前后端镜像构建，节省 CI 资源"
+
