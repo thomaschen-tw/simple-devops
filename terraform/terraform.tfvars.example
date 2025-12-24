@@ -1,0 +1,30 @@
+# Terraform 变量配置文件示例
+# 复制此文件为 terraform.tfvars 并填入实际值
+
+aws_region   = "ap-southeast-1"  # AWS 区域（新加坡）
+aws_profile  = "company"          # AWS CLI Profile 名称
+project_name = "simple-blog"
+environment  = "prod"
+
+# GitHub 配置
+github_username = "thomaschen-tw"
+github_repo     = "simple-devops"
+github_token    = "ghp_your_github_personal_access_token_here"
+
+# 数据库配置
+db_username = "admin"
+db_password = "your_secure_password_here"
+db_name     = "blog"
+db_instance_class = "db.t3.micro"
+
+# ECS 配置
+backend_cpu    = 512
+backend_memory = 1024
+frontend_cpu   = 256
+frontend_memory = 512
+desired_count  = 1
+
+# 网络配置
+vpc_cidr = "10.0.0.0/16"
+# availability_zones = ["us-east-1a", "us-east-1b"]  # 可选，留空则自动选择
+

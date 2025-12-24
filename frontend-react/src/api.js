@@ -3,9 +3,27 @@
  * 统一管理前后端 API 通信
  */
 
-// API 基础地址；可通过环境变量 VITE_API_BASE_URL 覆盖（用于不同环境）
-// 本地开发默认使用 localhost:8000，Docker/K8s 环境可通过环境变量覆盖
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+// API 基础地址配置
+// 优先使用环境变量，如果没有则根据当前环境自动判断
+// - 开发环境：使用 localhost:8000
+// - 生产环境（AWS ALB）：使用相对路径（通过 ALB 路径路由）
+const getApiBase = () => {
+  // 如果设置了环境变量，直接使用
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // 生产环境：使用相对路径（通过 ALB 路径路由）
+  // ALB 会将 /search、/posts 等路径转发到后端
+  if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    return ""; // 使用相对路径
+  }
+  
+  // 开发环境：使用 localhost
+  return "http://localhost:8000";
+};
+
+const API_BASE = getApiBase();
 
 /**
  * 搜索文章
@@ -17,7 +35,9 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
  */
 export async function searchArticles(query) {
   // 构建带查询参数的 URL 并调用后端搜索接口
-  const url = new URL("/search", API_BASE);
+  // 如果 API_BASE 为空，使用相对路径
+  const baseUrl = API_BASE || window.location.origin;
+  const url = new URL("/search", baseUrl);
   url.searchParams.set("q", query);
   const res = await fetch(url, { headers: { "Content-Type": "application/json" } });
   if (!res.ok) {
@@ -38,7 +58,9 @@ export async function searchArticles(query) {
  */
 export async function createArticle(payload) {
   // POST 请求创建新文章；payload 应包含 title 和 content
-  const res = await fetch(`${API_BASE}/posts`, {
+  // 如果 API_BASE 为空，使用相对路径
+  const baseUrl = API_BASE || window.location.origin;
+  const res = await fetch(`${baseUrl}/posts`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -58,7 +80,9 @@ export async function createArticle(payload) {
  * @throws {Error} 当请求失败或文章不存在时抛出错误
  */
 export async function getArticle(articleId) {
-  const res = await fetch(`${API_BASE}/posts/${articleId}`, {
+  // 如果 API_BASE 为空，使用相对路径
+  const baseUrl = API_BASE || window.location.origin;
+  const res = await fetch(`${baseUrl}/posts/${articleId}`, {
     headers: { "Content-Type": "application/json" },
   });
   if (!res.ok) {
