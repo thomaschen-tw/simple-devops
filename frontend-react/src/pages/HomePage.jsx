@@ -2,6 +2,15 @@
  * 主页组件
  * 提供导航按钮，引导用户进入搜索或创建页面
  */
+
+/**
+ * HomePage 组件
+ * 显示欢迎信息和导航按钮
+ * 
+ * @param {Object} props - 组件属性
+ * @param {Function} props.onNavigate - 页面导航回调函数，接收目标页面名称
+ * @returns {JSX.Element} 主页组件
+ */
 function HomePage({ onNavigate }) {
   return (
     <section className="card home-page">
@@ -28,4 +37,3 @@ function HomePage({ onNavigate }) {
 }
 
 export default HomePage;
-

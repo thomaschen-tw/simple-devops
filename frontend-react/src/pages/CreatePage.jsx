@@ -1,3 +1,7 @@
+/**
+ * 创建文章页面组件
+ * 提供表单用于创建新文章
+ */
 import { useState } from "react";
 import { createArticle } from "../api";
 
@@ -8,15 +12,21 @@ function CreatePage({ onCreated }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  /**
+   * 处理表单提交
+   * 调用后端创建接口，创建新文章
+   * 
+   * @param {Event} event - 表单提交事件
+   */
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
     setMessage("");
     setError("");
     try {
-      // Send payload to backend; backend returns the created article with id.
+      // 发送数据到后端；后端返回创建的文章（包含 id）
       const article = await createArticle({ title, content });
-      setMessage(`Created article #${article.id}`);
+      setMessage(`文章 #${article.id} 创建成功`);
       setTitle("");
       setContent("");
       if (onCreated) onCreated(article);
@@ -29,10 +39,10 @@ function CreatePage({ onCreated }) {
 
   return (
     <section className="card">
-      <h2>Create Article</h2>
+      <h2>创建文章</h2>
       <form onSubmit={handleSubmit} className="form">
         <label>
-          Title
+          标题
           <input
             type="text"
             value={title}
@@ -41,7 +51,7 @@ function CreatePage({ onCreated }) {
           />
         </label>
         <label>
-          Content
+          内容
           <textarea
             rows="6"
             value={content}
@@ -50,7 +60,7 @@ function CreatePage({ onCreated }) {
           />
         </label>
         <button type="submit" disabled={loading}>
-          {loading ? "Saving..." : "Save"}
+          {loading ? "保存中..." : "保存"}
         </button>
       </form>
       {message && <p className="success">{message}</p>}
@@ -60,4 +70,3 @@ function CreatePage({ onCreated }) {
 }
 
 export default CreatePage;
-

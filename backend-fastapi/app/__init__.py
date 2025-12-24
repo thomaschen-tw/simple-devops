@@ -1,2 +1,3 @@
-# Marks app as a Python package.
-
+"""
+将 app 目录标记为 Python 包
+"""
