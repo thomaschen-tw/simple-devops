@@ -26,7 +26,7 @@ services:
   backend:
     # 替换 YOUR_GITHUB_USERNAME 和 YOUR_REPO 为你的实际 GitHub 用户名和仓库名
     # GitHub Actions 会自动构建镜像为: ghcr.io/username/repo/backend:latest
-    # 例如：ghcr.io/xiaotongchen/simple-devops/backend:latest
+    # 例如：image: ghcr.io/thomaschen-tw/simple-devops/backend:latest
     image: ghcr.io/YOUR_GITHUB_USERNAME/YOUR_REPO/backend:latest
     container_name: blog-backend
     environment:
@@ -47,7 +47,7 @@ services:
   frontend:
     # 替换 YOUR_GITHUB_USERNAME 和 YOUR_REPO 为你的实际 GitHub 用户名和仓库名
     # GitHub Actions 会自动构建镜像为: ghcr.io/username/repo/frontend:latest
-    # 例如：ghcr.io/xiaotongchen/simple-devops/frontend:latest
+    # 例如：image: ghcr.io/thomaschen-tw/simple-devops/frontend:latest
     image: ghcr.io/YOUR_GITHUB_USERNAME/YOUR_REPO/frontend:latest
     container_name: blog-frontend
     ports:

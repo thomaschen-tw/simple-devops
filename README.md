@@ -39,7 +39,7 @@ cd /Users/xiaotongchen/aiTools/simple-devops
 
 # 方法一：使用部署脚本（推荐）
 ./deploy.sh YOUR_GITHUB_USERNAME YOUR_REPO_NAME
-# 例如: ./deploy.sh xiaotongchen simple-devops
+# 例如: ./deploy.sh thomaschen-tw simple-devops
 
 # 方法二：手动使用 docker-compose
 # 1. 编辑 docker-compose.prod.yml，替换 YOUR_GITHUB_USERNAME 和 YOUR_REPO
