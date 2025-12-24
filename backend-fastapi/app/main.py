@@ -5,12 +5,12 @@ Creates tables on startup (for dev), registers CORS, and mounts routes.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.models import Base, Article
 from . import models
 from .routes import router
 
-# Ensure tables exist on startup. For production, prefer migrations (Alembic).
-models.Base.metadata.create_all(bind=models.engine)
+# Note: Table creation is deferred to avoid database connection during import.
+# Tables will be created by start.sh script or on first request.
+# For production, prefer migrations (Alembic).
 
 app = FastAPI(title="Blog API", version="0.1.0")
 

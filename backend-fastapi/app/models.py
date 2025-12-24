@@ -48,7 +48,6 @@ class ArticleOut(ArticleCreate):
     id: int
     created_at: datetime
 
-    class Config:
-        # Allow Pydantic to read from ORM objects.
-        from_attributes = True
+    # Use ConfigDict instead of class Config (Pydantic V2)
+    model_config = {"from_attributes": True}
 

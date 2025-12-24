@@ -60,6 +60,7 @@ jobs:
       
       - name: Delete old package versions
         if: github.event_name != 'pull_request'
+        continue-on-error: true
         uses: actions/delete-package-versions@v5
         with:
           package-name: frontend

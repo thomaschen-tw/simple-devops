@@ -32,10 +32,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run tests
+        env:
+          # 设置一个不会真正连接的 DATABASE_URL，避免测试时连接数据库
+          # 健康检查测试不需要数据库连接
+          DATABASE_URL: "postgresql+psycopg://test:test@localhost:5432/test"
         run: |
           # 设置 PYTHONPATH 以便导入 app 模块
           export PYTHONPATH="${PYTHONPATH}:${GITHUB_WORKSPACE}/backend-fastapi"
-          pytest
+          pytest -v
         # Note: Current tests don't require a database connection.
         # If you add database-dependent tests, add a Postgres service here.
 
@@ -66,6 +70,7 @@ jobs:
       
       - name: Delete old package versions
         if: github.event_name != 'pull_request'
+        continue-on-error: true
         uses: actions/delete-package-versions@v5
         with:
           package-name: backend
