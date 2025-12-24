@@ -89,6 +89,9 @@ jobs:
         uses: docker/setup-buildx-action@v3
       
       # 步骤 4：构建并推送镜像
+      # 标签说明：
+      #   - :latest 表示最新版本
+      #   - :${{ github.sha }} 表示提交 SHA，用于版本追踪
       - name: Build and push (multi-platform)
         uses: docker/build-push-action@v6
         with:
@@ -96,8 +99,8 @@ jobs:
           platforms: linux/amd64,linux/arm64      # 构建两个平台的镜像（Intel + Apple Silicon）
           push: ${{ github.event_name != 'pull_request' }}  # PR 时不推送，只构建
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest        # 最新版本标签
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}  # 提交 SHA 标签
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           cache-from: type=gha   # 使用 GitHub Actions 缓存加速构建
           cache-to: type=gha,mode=max
       
