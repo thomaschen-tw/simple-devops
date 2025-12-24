@@ -180,10 +180,64 @@ button:disabled {
   background: #f8fafc;
 }
 
+.list__item--clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.list__item--clickable:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
 .list__meta {
   display: flex;
   justify-content: space-between;
   gap: 8px;
+  margin-bottom: 8px;
+}
+
+.list__meta strong {
+  color: #0f172a;
+  font-size: 1.1em;
+}
+
+.list__meta small {
+  color: #64748b;
+  font-size: 0.9em;
+}
+
+/* 文章详情页样式 */
+.article-detail {
+  max-width: 800px;
+}
+
+.article-detail__header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.article-detail__title {
+  margin: 16px 0 8px 0;
+  color: #0f172a;
+  font-size: 1.8em;
+}
+
+.article-detail__meta {
+  color: #64748b;
+  font-size: 0.95em;
+  margin: 0;
+}
+
+.article-detail__content {
+  line-height: 1.8;
+  color: #334155;
+  font-size: 1.05em;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .error {

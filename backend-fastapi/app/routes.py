@@ -39,7 +39,7 @@ def search_articles(q: str, db: Session = Depends(get_db)):
     """
     搜索文章接口
     根据关键词在标题和内容中搜索文章（使用 ILIKE 模糊匹配，不区分大小写）
-    结果按创建时间升序排序（从旧到新）
+    结果按创建时间降序排序（从新到旧）
     所有时间戳转换为中国上海时区（UTC+8）
     
     Args:
@@ -47,7 +47,7 @@ def search_articles(q: str, db: Session = Depends(get_db)):
         db: 数据库会话（依赖注入）
     
     Returns:
-        List[ArticleOut]: 匹配的文章列表，按创建时间升序排序
+        List[ArticleOut]: 匹配的文章列表，按创建时间降序排序
     
     Raises:
         HTTPException: 当搜索关键词为空时返回 400 错误
@@ -59,7 +59,7 @@ def search_articles(q: str, db: Session = Depends(get_db)):
     results = (
         db.query(Article)
         .filter(or_(Article.title.ilike(keyword), Article.content.ilike(keyword)))
-        .order_by(Article.created_at.asc())  # 按创建时间升序排序（从旧到新）
+        .order_by(Article.created_at.desc())  # 按创建时间降序排序（从新到旧）
         .all()
     )
     
@@ -82,6 +82,44 @@ def search_articles(q: str, db: Session = Depends(get_db)):
         ))
     
     return converted_results
+
+
+@router.get("/posts/{article_id}", response_model=ArticleOut)
+def get_article(article_id: int, db: Session = Depends(get_db)):
+    """
+    获取单篇文章详情接口
+    根据文章 ID 获取文章详情
+    返回的时间戳转换为中国上海时区（UTC+8）
+    
+    Args:
+        article_id: 文章 ID
+        db: 数据库会话（依赖注入）
+    
+    Returns:
+        ArticleOut: 文章详情对象
+    
+    Raises:
+        HTTPException: 当文章不存在时返回 404 错误
+    """
+    article = db.query(Article).filter(Article.id == article_id).first()
+    if article is None:
+        raise HTTPException(status_code=404, detail="Article not found")
+    
+    # 将 UTC 时间转换为中国上海时区（UTC+8）
+    dt = article.created_at
+    if dt.tzinfo is None:
+        # 如果数据库存储的是 naive datetime，假设是 UTC
+        dt = dt.replace(tzinfo=timezone.utc)
+    # 转换为上海时区
+    dt_shanghai = dt.astimezone(SHANGHAI_TZ)
+    
+    # 创建 ArticleOut 对象，确保时区信息正确传递
+    return ArticleOut(
+        id=article.id,
+        title=article.title,
+        content=article.content,
+        created_at=dt_shanghai
+    )
 
 
 @router.post("/posts", response_model=ArticleOut, status_code=201)

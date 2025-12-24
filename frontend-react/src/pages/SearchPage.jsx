@@ -5,7 +5,15 @@
 import { useState } from "react";
 import { searchArticles } from "../api";
 
-function SearchPage() {
+/**
+ * SearchPage 组件
+ * 提供搜索功能，点击文章可跳转到详情页
+ * 
+ * @param {Object} props - 组件属性
+ * @param {Function} props.onArticleClick - 文章点击回调函数，接收文章 ID
+ * @returns {JSX.Element} 搜索页面组件
+ */
+function SearchPage({ onArticleClick }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,6 +40,34 @@ function SearchPage() {
     }
   };
 
+  /**
+   * 格式化日期时间为24小时制
+   * 
+   * @param {string} dateString - ISO 日期字符串
+   * @returns {string} 格式化后的日期时间字符串（24小时制）
+   */
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+
+  /**
+   * 处理文章点击事件
+   * 
+   * @param {number} articleId - 文章 ID
+   */
+  const handleArticleClick = (articleId) => {
+    if (onArticleClick) {
+      onArticleClick(articleId);
+    }
+  };
+
   return (
     <section className="card">
       <h2>搜索文章</h2>
@@ -50,10 +86,14 @@ function SearchPage() {
       {error && <p className="error">{error}</p>}
       <ul className="list">
         {results.map((item) => (
-          <li key={item.id} className="list__item">
+          <li
+            key={item.id}
+            className="list__item list__item--clickable"
+            onClick={() => handleArticleClick(item.id)}
+          >
             <div className="list__meta">
               <strong>{item.title}</strong>
-              <small>{new Date(item.created_at).toLocaleString()}</small>
+              <small>{formatDateTime(item.created_at)}</small>
             </div>
             <p>{item.content}</p>
           </li>

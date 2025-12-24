@@ -48,3 +48,24 @@ export async function createArticle(payload) {
   }
   return res.json();
 }
+
+/**
+ * 获取文章详情
+ * 根据文章 ID 获取单篇文章的详细信息
+ * 
+ * @param {number} articleId - 文章 ID
+ * @returns {Promise<Object>} 文章详情对象（包含 id、title、content 和 created_at）
+ * @throws {Error} 当请求失败或文章不存在时抛出错误
+ */
+export async function getArticle(articleId) {
+  const res = await fetch(`${API_BASE}/posts/${articleId}`, {
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error("文章不存在");
+    }
+    throw new Error(`获取文章失败: ${res.statusText}`);
+  }
+  return res.json();
+}
