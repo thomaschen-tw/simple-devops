@@ -53,3 +53,8 @@ Thumbs.db
 # Local development
 docker-compose.prod.*.yml
 
+# Sensitive configuration files
+*.credentials
+*credentials.json
+*secrets.json
+

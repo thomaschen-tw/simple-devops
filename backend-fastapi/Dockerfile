@@ -25,6 +25,8 @@ COPY start.sh .
 RUN chmod +x start.sh
 
 EXPOSE 8000
+# Docker 环境中的数据库连接（容器内部通信，使用服务名 postgres）
+# 本地开发时，数据库端口映射为 5434->5432，连接字符串在 models.py 中配置
 ENV DATABASE_URL="postgresql+psycopg://demo:demo@postgres:5432/demo"
 
 CMD ["./start.sh"]

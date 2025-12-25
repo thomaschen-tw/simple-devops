@@ -1,0 +1,165 @@
+{
+    "name": "24x7 工单检测与 AI 分诊",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "new-ticket"
+        },
+        "id": "WebhookNode",
+        "name": "接收工单",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [200, 0]
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "你是一个客户支持 AI，请分析以下工单：{{ $json.issue_title }} - {{ $json.issue_description }}。返回 JSON 包含 sentiment, urgency, category, summary。"
+        },
+        "id": "AIAnalysis",
+        "name": "AI 工单分析",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3,
+        "position": [500, 0]
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.urgency }}",
+                    "rightValue": "critical",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "outputKey": "紧急工单"
+              },
+              {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.urgency }}",
+                    "rightValue": "high",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "outputKey": "高优先级工单"
+              },
+              {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.urgency }}",
+                    "rightValue": "normal",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "outputKey": "常规工单"
+              },
+              {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.urgency }}",
+                    "rightValue": "low",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "outputKey": "自动回复工单"
+              }
+            ]
+          }
+        },
+        "id": "SwitchNode",
+        "name": "工单分支",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3,
+        "position": [800, 0]
+      },
+      {
+        "parameters": {
+          "toEmail": "yourname@gmail.com",
+          "subject": "紧急工单: {{$json.issue_title}}",
+          "text": "{{$json.issue_description}}"
+        },
+        "id": "EmailNode",
+        "name": "发送紧急邮件",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 1,
+        "position": [1100, -200],
+        "credentials": {
+          "gmailOAuth2Api": "Your Gmail OAuth2 Credential"
+        }
+      },
+      {
+        "parameters": {
+          "channel": "#support-alerts",
+          "text": "紧急工单: {{$json.issue_title}} - {{$json.issue_description}}"
+        },
+        "id": "SlackNodeCritical",
+        "name": "发送 Slack 通知 (紧急)",
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 1,
+        "position": [1100, -50],
+        "credentials": {
+          "slackApi": "Your Slack Credential"
+        }
+      },
+      {
+        "parameters": {
+          "channel": "#support-team",
+          "text": "高优先级工单: {{$json.issue_title}} - {{$json.issue_description}}"
+        },
+        "id": "SlackNodeHigh",
+        "name": "发送 Slack 通知 (高优先级)",
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 1,
+        "position": [1100, 100],
+        "credentials": {
+          "slackApi": "Your Slack Credential"
+        }
+      },
+      {
+        "parameters": {
+          "amount": 120,
+          "unit": "minutes"
+        },
+        "id": "WaitNode",
+        "name": "常规工单延迟处理",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1,
+        "position": [1100, 250]
+      },
+      {
+        "parameters": {
+          "toEmail": "={{ $json.customer_email }}",
+          "subject": "工单已收到: {{$json.issue_title}}",
+          "text": "您好 {{$json.customer_name}}，我们已收到您的工单：{{$json.issue_description}}，稍后会处理。"
+        },
+        "id": "AutoReplyNode",
+        "name": "自动回复客户邮件",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 1,
+        "position": [1100, 400],
+        "credentials": {
+          "gmailOAuth2Api": "Your Gmail OAuth2 Credential"
+        }
+      }
+    ],
+    "connections": {
+      "接收工单": { "main": [[{ "node": "AI 工单分析", "type": "main", "index": 0 }]] },
+      "AI 工单分析": { "main": [[{ "node": "工单分支", "type": "main", "index": 0 }]] },
+      "工单分支": {
+        "main": [
+          [
+            { "node": "发送紧急邮件", "type": "main", "index": 0 },
+            { "node": "发送 Slack 通知 (紧急)", "type": "main", "index": 0 }
+          ],
+          [{ "node": "发送 Slack 通知 (高优先级)", "type": "main", "index": 0 }],
+          [{ "node": "常规工单延迟处理", "type": "main", "index": 0 }],
+          [{ "node": "自动回复客户邮件", "type": "main", "index": 0 }]
+        ]
+      }
+    }
+  }
+  

@@ -7,6 +7,7 @@ import CreatePage from "./pages/CreatePage";
 import SearchPage from "./pages/SearchPage";
 import HomePage from "./pages/HomePage";
 import ArticleDetailPage from "./pages/ArticleDetailPage";
+import FeedbackPage from "./pages/FeedbackPage";
 
 /**
  * App 组件
@@ -15,7 +16,7 @@ import ArticleDetailPage from "./pages/ArticleDetailPage";
  * @returns {JSX.Element} 应用根组件
  */
 function App() {
-  // 当前页面状态：'home' | 'search' | 'create' | 'detail'
+  // 当前页面状态：'home' | 'search' | 'create' | 'detail' | 'feedback'
   const [currentPage, setCurrentPage] = useState("home");
   // 当前查看的文章 ID（用于详情页）
   const [currentArticleId, setCurrentArticleId] = useState(null);
@@ -64,6 +65,12 @@ function App() {
             >
               创建
             </button>
+            <button
+              className={`nav__btn ${currentPage === "feedback" ? "nav__btn--active" : ""}`}
+              onClick={() => setCurrentPage("feedback")}
+            >
+              反馈
+            </button>
           </nav>
         )}
       </header>
@@ -77,6 +84,7 @@ function App() {
         {currentPage === "create" && (
           <CreatePage onCreated={() => setCurrentPage("search")} />
         )}
+        {currentPage === "feedback" && <FeedbackPage />}
         {currentPage === "detail" && currentArticleId && (
           <ArticleDetailPage
             articleId={currentArticleId}
