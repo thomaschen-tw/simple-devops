@@ -69,3 +69,29 @@ export async function getArticle(articleId) {
   }
   return res.json();
 }
+
+/**
+ * 提交反馈
+ * 调用后端反馈接口，提交用户反馈到 n8n 进行自动化处理
+ * 
+ * @param {Object} payload - 反馈数据对象
+ * @param {string} payload.issue_title - 问题标题
+ * @param {string} payload.issue_description - 问题描述
+ * @param {string} payload.customer_name - 客户姓名
+ * @param {string} payload.customer_email - 客户邮箱
+ * @param {string} payload.urgency - 紧急程度（critical, high, normal, low）
+ * @returns {Promise<Object>} 提交结果对象（包含 status 和 message）
+ * @throws {Error} 当请求失败时抛出错误
+ */
+export async function submitFeedback(payload) {
+  const res = await fetch(`${API_BASE}/feedback`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(errorData.detail || `提交失败: ${res.statusText}`);
+  }
+  return res.json();
+}

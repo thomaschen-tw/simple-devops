@@ -3,19 +3,38 @@ API 路由定义
 包含搜索和创建文章的接口
 """
 
+import logging
+import os
 from datetime import timezone, timedelta
 from typing import List
 
+import requests
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, EmailStr
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from .models import Article, ArticleCreate, ArticleOut, SessionLocal
+from .models import Article, ArticleCreate, ArticleOut, SessionLocal, Ticket
+
+# 配置日志
+logger = logging.getLogger(__name__)
 
 # 中国上海时区（UTC+8）
 SHANGHAI_TZ = timezone(timedelta(hours=8))
 
+# N8N Webhook URL，可通过环境变量覆盖
+N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL", "http://localhost:5678/webhook-test/new-ticket")
+
 router = APIRouter()
+
+
+class FeedbackCreate(BaseModel):
+    """反馈提交请求体模式"""
+    issue_title: str
+    issue_description: str
+    customer_name: str
+    customer_email: EmailStr
+    urgency: str  # critical, high, normal, low
 
 
 def get_db():
@@ -149,3 +168,116 @@ def create_post(article: ArticleCreate, db: Session = Depends(get_db)):
     # 转换为上海时区并更新对象属性
     new_article.created_at = dt.astimezone(SHANGHAI_TZ)
     return new_article
+
+
+@router.post("/feedback", status_code=201)
+def submit_feedback(feedback: FeedbackCreate, db: Session = Depends(get_db)):
+    """
+    提交反馈接口
+    接收用户反馈，先保存到数据库，然后转发到 n8n webhook 进行自动化处理
+    
+    数据格式与 n8n.json 工作流完全匹配：
+    - issue_title: 问题标题
+    - issue_description: 问题描述
+    - customer_name: 客户姓名
+    - customer_email: 客户邮箱
+    - urgency: 紧急程度 (critical, high, normal, low)
+    
+    n8n 工作流会根据 urgency 进行分支处理：
+    - critical: 发送紧急邮件和 Slack 通知
+    - high: 发送 Slack 通知
+    - normal: 延迟处理
+    - low: 自动回复客户邮件
+    
+    Args:
+        feedback: 反馈提交请求体（包含 issue_title, issue_description, customer_name, customer_email, urgency）
+        db: 数据库会话（依赖注入）
+    
+    Returns:
+        dict: 提交结果，包含状态和消息
+    
+    Raises:
+        HTTPException: 当数据验证失败时返回错误
+    """
+    # 验证紧急程度（必须与 n8n.json 中的值完全匹配）
+    valid_urgency = ["critical", "high", "normal", "low"]
+    if feedback.urgency not in valid_urgency:
+        logger.warning(f"Invalid urgency value: {feedback.urgency}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid urgency. Must be one of: {', '.join(valid_urgency)}"
+        )
+    
+    # 准备数据
+    ticket_data = {
+        "issue_title": feedback.issue_title.strip(),
+        "issue_description": feedback.issue_description.strip(),
+        "customer_name": feedback.customer_name.strip(),
+        "customer_email": feedback.customer_email.strip().lower(),
+        "urgency": feedback.urgency.lower()
+    }
+    
+    # 先保存到数据库（确保数据不丢失）
+    try:
+        new_ticket = Ticket(
+            issue_title=ticket_data["issue_title"],
+            issue_description=ticket_data["issue_description"],
+            customer_name=ticket_data["customer_name"],
+            customer_email=ticket_data["customer_email"],
+            urgency=ticket_data["urgency"],
+            n8n_sent="pending"
+        )
+        db.add(new_ticket)
+        db.commit()
+        db.refresh(new_ticket)
+        
+        logger.info(
+            f"工单已保存到数据库: ID={new_ticket.id}, 标题={ticket_data['issue_title']}, "
+            f"客户={ticket_data['customer_name']}, 紧急程度={ticket_data['urgency']}"
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error(f"保存工单到数据库失败: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="保存工单失败，请稍后重试"
+        )
+    
+    # 然后尝试发送到 n8n webhook（即使失败也不影响返回成功，因为数据已保存）
+    n8n_success = False
+    try:
+        logger.debug(f"发送工单到 n8n webhook: {N8N_WEBHOOK_URL}")
+        resp = requests.post(N8N_WEBHOOK_URL, json=ticket_data, timeout=10)
+        resp.raise_for_status()
+        
+        n8n_success = True
+        new_ticket.n8n_sent = "success"
+        db.commit()
+        
+        logger.info(f"工单成功提交到 n8n，响应状态: {resp.status_code}")
+    except requests.exceptions.RequestException as e:
+        # n8n 连接失败，记录但继续（数据已保存）
+        logger.warning(f"发送工单到 n8n 失败: {str(e)}")
+        new_ticket.n8n_sent = "failed"
+        db.commit()
+    
+    # 根据紧急程度返回不同的提示信息
+    urgency_messages = {
+        "critical": "紧急工单已提交，我们会立即处理并通知相关人员",
+        "high": "高优先级工单已提交，我们会优先处理",
+        "normal": "工单已提交，我们会在工作时间内尽快处理",
+        "low": "工单已提交，系统已自动发送确认邮件"
+    }
+    
+    # 即使 n8n 失败，也返回成功（因为数据已保存到数据库）
+    message = urgency_messages.get(ticket_data["urgency"], "反馈已成功提交，我们会尽快处理")
+    if not n8n_success:
+        message += "（注意：自动化处理系统暂时不可用，但您的工单已保存）"
+    
+    return {
+        "status": "success",
+        "message": message,
+        "ticket_id": new_ticket.id,
+        "ticket": ticket_data,
+        "n8n_sent": n8n_success
+    }
