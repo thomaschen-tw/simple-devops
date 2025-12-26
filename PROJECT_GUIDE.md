@@ -30,7 +30,9 @@ simple-devops/
 │   ├── Dockerfile          # 后端镜像构建文件
 │   ├── start.sh            # 启动脚本（自动初始化数据库）
 │   ├── seed_db.py          # 数据库种子数据脚本
-│   └── requirements.txt    # Python 依赖
+│   ├── pyproject.toml      # 项目配置和依赖（uv）
+│   ├── uv.lock             # 依赖锁定文件
+│   └── requirements.txt    # ⚠️ 已弃用（保留参考）
 ├── frontend-react/          # 前端服务
 │   ├── src/                # 源代码
 │   │   ├── App.jsx         # 主应用组件
@@ -365,9 +367,13 @@ simple-devops/
 2. **启动后端**:
    ```bash
    cd backend-fastapi
-   source .venv/bin/activate
+   # 安装 uv 和 Python 3.13（如果还没有）
+   uv python install 3.13
+   uv sync
+   # 设置数据库连接
    export DATABASE_URL="postgresql+psycopg://demo:demo@localhost:5433/demo"
-   uvicorn app.main:app --reload
+   # 运行应用（uv 自动使用虚拟环境）
+   uv run uvicorn app.main:app --reload
    ```
 
 3. **启动前端**:

@@ -38,27 +38,26 @@ jobs:
       # 步骤 1：拉取代码
       - uses: actions/checkout@v4
       
-      # 步骤 2：设置 Python 环境
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+      # 步骤 2：安装 uv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: "3.13"
+          version: "latest"
       
-      # 步骤 3：安装依赖
+      # 步骤 3：设置 Python 3.13
+      - name: Set up Python 3.13
+        run: uv python install 3.13
+      
+      # 步骤 4：安装依赖（使用 uv sync，会自动创建虚拟环境并安装依赖）
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: uv sync --frozen --no-dev
       
-      # 步骤 4：运行测试
+      # 步骤 5：运行测试
       - name: Run tests
         env:
           # 设置假的数据库地址，避免测试时真的连接数据库
           DATABASE_URL: "postgresql+psycopg://test:test@localhost:5432/test"
-        run: |
-          # 设置 Python 路径，让 pytest 能找到 app 模块
-          export PYTHONPATH="${PYTHONPATH}:${GITHUB_WORKSPACE}/backend-fastapi"
-          pytest -v
+        run: uv run pytest -v
 
   # 任务 2：构建并推送镜像（只有测试通过后才执行）
   build-and-push:
