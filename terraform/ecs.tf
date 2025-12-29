@@ -142,7 +142,7 @@ resource "aws_ecs_task_definition" "backend" {
       environment = [
         {
           name  = "DATABASE_URL"
-          value = "postgresql+psycopg://${var.db_username}:${var.db_password}@${aws_db_instance.main.endpoint}:5432/${var.db_name}"
+          value = "postgresql+psycopg://${var.database_username}:${var.database_password}@${aws_db_instance.main.address}:5432/${var.database_name}"
         }
       ]
 
@@ -150,7 +150,7 @@ resource "aws_ecs_task_definition" "backend" {
         logDriver = "awslogs"
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.backend.name
-          "awslogs-region"        = var.aws_region
+          "awslogs-region"        = data.aws_region.current.name
           "awslogs-stream-prefix" = "ecs"
         }
       }
@@ -202,7 +202,7 @@ resource "aws_ecs_task_definition" "frontend" {
         logDriver = "awslogs"
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.frontend.name
-          "awslogs-region"        = var.aws_region
+          "awslogs-region"        = data.aws_region.current.name
           "awslogs-stream-prefix" = "ecs"
         }
       }

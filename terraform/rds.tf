@@ -37,15 +37,15 @@ resource "aws_db_instance" "main" {
   identifier             = "${local.name_prefix}-db"
   engine                 = "postgres"
   engine_version         = "15.4"
-  instance_class         = var.db_instance_class
-  allocated_storage      = 20
-  max_allocated_storage  = 100
+  instance_class         = var.database_instance_class
+  allocated_storage      = var.database_allocated_storage
+  max_allocated_storage  = var.database_allocated_storage * 2
   storage_type           = "gp3"
   storage_encrypted      = true
 
-  db_name  = var.db_name
-  username = var.db_username
-  password = var.db_password
+  db_name  = var.database_name
+  username = var.database_username
+  password = var.database_password
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
   parameter_group_name   = aws_db_parameter_group.main.name
@@ -55,23 +55,28 @@ resource "aws_db_instance" "main" {
   backup_window          = "03:00-04:00"
   maintenance_window     = "mon:04:00-mon:05:00"
 
-  # 多可用区部署（高可用）
-  multi_az               = true
+  # 多可用区部署（生产环境启用，开发环境关闭以节省成本）
+  multi_az               = var.environment == "prod" ? true : false
   publicly_accessible    = false
-  skip_final_snapshot    = false
-  final_snapshot_identifier = "${local.name_prefix}-db-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+  
+  # 删除保护（生产环境启用）
+  deletion_protection    = var.environment == "prod" ? true : false
+  skip_final_snapshot    = var.environment != "prod"
+  final_snapshot_identifier = var.environment == "prod" ? "${local.name_prefix}-db-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}" : null
 
-  # 启用增强监控
-  monitoring_interval = 60
-  monitoring_role_arn = aws_iam_role.rds_enhanced_monitoring.arn
+  # 启用增强监控（生产环境）
+  monitoring_interval = var.environment == "prod" ? 60 : 0
+  monitoring_role_arn = var.environment == "prod" ? aws_iam_role.rds_enhanced_monitoring[0].arn : null
 
   tags = {
     Name = "${local.name_prefix}-db"
   }
 }
 
-# IAM Role for RDS Enhanced Monitoring
+# IAM Role for RDS Enhanced Monitoring（仅生产环境）
 resource "aws_iam_role" "rds_enhanced_monitoring" {
+  count = var.environment == "prod" ? 1 : 0
+  
   name = "${local.name_prefix}-rds-monitoring-role"
 
   assume_role_policy = jsonencode({
@@ -89,7 +94,9 @@ resource "aws_iam_role" "rds_enhanced_monitoring" {
 }
 
 resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
-  role       = aws_iam_role.rds_enhanced_monitoring.name
+  count = var.environment == "prod" ? 1 : 0
+  
+  role       = aws_iam_role.rds_enhanced_monitoring[0].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 

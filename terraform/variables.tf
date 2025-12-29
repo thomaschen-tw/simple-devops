@@ -1,7 +1,12 @@
 variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
-  default     = "us-east-1"
+  default     = "ap-southeast-1"
+}
+
+variable "aws_zone1" {
+  default = "ap-southeast-1a"
+
 }
 
 variable "project_name" {
@@ -123,9 +128,9 @@ variable "vpc_cidr" {
 }
 
 variable "availability_zones" {
-  description = "Availability zones to use"
+  description = "Availability zones to use (leave empty to auto-detect)"
   type        = list(string)
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = []  # 空列表表示自动检测当前区域的所有可用区
 }
 
 # 域名和证书（可选）
@@ -149,6 +154,14 @@ variable "tags" {
     Project     = "simple-devops"
     ManagedBy   = "terraform"
     Environment = "dev"
+  }
+}
+
+variable "aws_amiID" {
+  type = map(any)
+  default = {
+    "ap-southeast-1" = "ami-00d8fc944fb171e29"
+    "ap-southeast-2" = "ami-0eeab253db7e765a9"
   }
 }
 
