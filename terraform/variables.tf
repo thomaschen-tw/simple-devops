@@ -1,126 +1,154 @@
-/**
- * Terraform 变量定义
- * 定义所有可配置的变量
- */
-
 variable "aws_region" {
-  description = "AWS 区域"
+  description = "AWS region to deploy resources"
   type        = string
-  default     = "ap-southeast-1"  # 新加坡区域
-}
-
-variable "aws_profile" {
-  description = "AWS CLI Profile 名称（用于认证）"
-  type        = string
-  default     = "company"
+  default     = "us-east-1"
 }
 
 variable "project_name" {
-  description = "项目名称，用于资源命名"
+  description = "Project name used for resource naming"
   type        = string
-  default     = "simple-blog"
+  default     = "simple-devops"
 }
 
 variable "environment" {
-  description = "环境名称（dev/staging/prod）"
+  description = "Environment name (dev, staging, prod)"
   type        = string
-  default     = "prod"
+  default     = "dev"
 }
 
-# GitHub 配置
+# GitHub Container Registry 配置
 variable "github_username" {
-  description = "GitHub 用户名"
+  description = "GitHub username for pulling images from GHCR"
   type        = string
 }
 
 variable "github_repo" {
-  description = "GitHub 仓库名"
+  description = "GitHub repository name"
   type        = string
 }
 
 variable "github_token" {
-  description = "GitHub Personal Access Token（用于拉取 GHCR 镜像）"
+  description = "GitHub token for pulling private images (optional)"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 # 数据库配置
-variable "db_username" {
-  description = "RDS 数据库用户名"
+variable "database_name" {
+  description = "RDS database name"
   type        = string
-  default     = "admin"
+  default     = "demo"
 }
 
-variable "db_password" {
-  description = "RDS 数据库密码（建议使用 Secrets Manager）"
+variable "database_username" {
+  description = "RDS master username"
+  type        = string
+  default     = "demo"
+}
+
+variable "database_password" {
+  description = "RDS master password (should use AWS Secrets Manager in production)"
   type        = string
   sensitive   = true
 }
 
-variable "db_name" {
-  description = "数据库名称"
-  type        = string
-  default     = "blog"
-}
-
-variable "db_instance_class" {
-  description = "RDS 实例类型"
+variable "database_instance_class" {
+  description = "RDS instance class"
   type        = string
   default     = "db.t3.micro"
 }
 
+variable "database_allocated_storage" {
+  description = "RDS allocated storage in GB"
+  type        = number
+  default     = 20
+}
+
 # ECS 配置
 variable "backend_cpu" {
-  description = "后端服务 CPU 单位（1024 = 1 vCPU）"
+  description = "Backend ECS task CPU units (1024 = 1 vCPU)"
   type        = number
   default     = 512
 }
 
 variable "backend_memory" {
-  description = "后端服务内存（MB）"
+  description = "Backend ECS task memory in MB"
   type        = number
   default     = 1024
 }
 
+variable "backend_desired_count" {
+  description = "Desired number of backend tasks"
+  type        = number
+  default     = 1
+}
+
 variable "frontend_cpu" {
-  description = "前端服务 CPU 单位（1024 = 1 vCPU）"
+  description = "Frontend ECS task CPU units (1024 = 1 vCPU)"
   type        = number
   default     = 256
 }
 
 variable "frontend_memory" {
-  description = "前端服务内存（MB）"
+  description = "Frontend ECS task memory in MB"
   type        = number
   default     = 512
 }
 
-variable "desired_count" {
-  description = "每个服务的期望任务数量"
+variable "frontend_desired_count" {
+  description = "Desired number of frontend tasks"
   type        = number
   default     = 1
 }
 
+# Auto Scaling 配置
+variable "min_capacity" {
+  description = "Minimum number of ECS tasks"
+  type        = number
+  default     = 1
+}
+
+variable "max_capacity" {
+  description = "Maximum number of ECS tasks"
+  type        = number
+  default     = 10
+}
+
 # 网络配置
 variable "vpc_cidr" {
-  description = "VPC CIDR 块"
+  description = "CIDR block for VPC"
   type        = string
   default     = "10.0.0.0/16"
 }
 
 variable "availability_zones" {
-  description = "可用区列表"
+  description = "Availability zones to use"
   type        = list(string)
-  default     = []
+  default     = ["us-east-1a", "us-east-1b"]
+}
+
+# 域名和证书（可选）
+variable "domain_name" {
+  description = "Domain name for the application (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "certificate_arn" {
+  description = "ACM certificate ARN for HTTPS (optional)"
+  type        = string
+  default     = ""
 }
 
 # 标签
-variable "common_tags" {
-  description = "应用到所有资源的通用标签"
+variable "tags" {
+  description = "Common tags for all resources"
   type        = map(string)
   default = {
-    Project     = "SimpleBlog"
-    ManagedBy   = "Terraform"
-    Environment = "production"
+    Project     = "simple-devops"
+    ManagedBy   = "terraform"
+    Environment = "dev"
   }
 }
 

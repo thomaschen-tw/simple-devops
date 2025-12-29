@@ -1,3 +1,15 @@
+# ⚠️ 此文件已弃用
+# 
+# 项目已迁移到 uv 包管理器，请使用 pyproject.toml 和 uv.lock
+# 
+# 使用方法：
+#   uv sync                    # 安装依赖
+#   uv add package-name        # 添加新依赖
+# 
+# 如需参考旧依赖列表，请查看 pyproject.toml
+#
+# 此文件保留仅用于参考，不会在构建或 CI/CD 中使用
+
 fastapi==0.115.0
 uvicorn==0.30.5
 sqlalchemy==2.0.36
@@ -5,4 +17,5 @@ psycopg[binary]==3.2.3
 pydantic==2.9.2
 pytest==8.3.3
 httpx==0.27.2
-
+requests==2.31.0
+email-validator>=2.0.0

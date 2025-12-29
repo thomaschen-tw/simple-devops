@@ -85,9 +85,9 @@ docker compose up --build
 - 后端启动脚本会自动检测数据库是否为空，如果为空则自动运行 `seed_db.py` 初始化 100 条测试文章
 - 如果数据库已有数据，则跳过初始化，不会覆盖现有数据
 
-## 后端单独运行（本地开发，Python 3.13，psycopg3）
+## 后端单独运行（本地开发，Python 3.13，使用 uv）
 
-**重要：必须在 `backend-fastapi` 目录下运行 uvicorn，否则会报 `ModuleNotFoundError: No module named 'app'`**
+**项目使用 uv 包管理器，Python 3.13 版本**
 
 ### 方法一：使用 docker-compose（推荐，自动配置环境变量）
 ```bash
@@ -96,31 +96,47 @@ docker compose up backend postgres
 # 数据库连接自动配置，无需手动设置 DATABASE_URL
 ```
 
-### 方法二：手动启动（需要先启动 Postgres）
+### 方法二：使用 uv（推荐，快速且自动管理虚拟环境）
 ```bash
-# 1. 确保 Postgres 已启动（使用你现有的容器或 docker-compose）
-docker start demo-postgres  # 或使用你的容器名
+# 1. 确保 Postgres 已启动
+docker start demo-postgres  # 或使用 docker-compose
 
-# 2. 进入后端目录（必须！）
+# 2. 进入后端目录
 cd /Users/xiaotongchen/aiTools/simple-devops/backend-fastapi
 
-# 3. 创建虚拟环境并安装依赖
-python3.13 -m venv .venv && source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+# 3. 安装 uv（如果还没有）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
 
-# 4. 设置数据库连接（使用 psycopg3 驱动）
+# 4. 安装 Python 3.13 和依赖（自动创建虚拟环境）
+uv python install 3.13
+uv sync
+
+# 5. 设置数据库连接
 export DATABASE_URL="postgresql+psycopg://demo:demo@localhost:5433/demo"
 
-# 5. 启动服务（必须在 backend-fastapi 目录下运行）
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# 6. 启动服务
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # 其他操作：
 # 生成 100 条测试文章
-python seed_db.py
+uv run python seed_db.py
 # 运行测试
-pytest
+uv run pytest -v
 ```
+
+### 方法三：传统方式（使用 pip，不推荐）
+```bash
+# 注意：项目已迁移到 uv，此方法仅用于参考
+cd /Users/xiaotongchen/aiTools/simple-devops/backend-fastapi
+python3.13 -m venv .venv && source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt  # ⚠️ requirements.txt 已弃用
+export DATABASE_URL="postgresql+psycopg://demo:demo@localhost:5433/demo"
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**推荐使用方法二（uv）**，更快且自动管理虚拟环境。详细说明请参考 [uv 快速开始指南](backend-fastapi/QUICKSTART.md)。
 
 ## 前端单独运行（/frontend-react）
 ```bash
