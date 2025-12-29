@@ -8,9 +8,19 @@
 # macOS/Linux
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 添加到 PATH（如果还没有）
-export PATH="$HOME/.local/bin:$PATH"
+# 添加到 PATH（永久添加到 ~/.zshrc）
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# 验证安装
+which uv
+uv --version
 ```
+
+**如果遇到 `command not found: uv`**：
+- 检查是否已安装：`ls -la ~/.local/bin/uv`
+- 如果已安装但找不到，执行上面的 PATH 配置
+- 如果未安装，重新运行安装命令
 
 ### 2. 安装 Python 3.13
 

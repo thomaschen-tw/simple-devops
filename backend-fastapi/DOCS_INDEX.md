@@ -13,6 +13,9 @@
 ### 🔍 代码质量
 - [CODE_REVIEW.md](CODE_REVIEW.md) - 代码审核报告（Python 3.13 + uv）
 
+### ⚠️ 故障排查
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - 常见问题解决方案
+
 ### 📝 技术文档
 - [ROUTING_GUIDE.md](ROUTING_GUIDE.md) - FastAPI 路由设计指南
 

@@ -1,0 +1,46 @@
+# AWS 配置
+aws_region = "us-east-1"
+project_name = "simple-devops"
+environment = "dev"
+
+# GitHub Container Registry 配置
+github_username = "YOUR_GITHUB_USERNAME"
+github_repo = "YOUR_REPO_NAME"
+# github_token = ""  # 可选，如果镜像私有则需要
+
+# 数据库配置
+database_name = "demo"
+database_username = "demo"
+database_password = "CHANGE_THIS_PASSWORD"  # ⚠️ 请修改为强密码
+database_instance_class = "db.t3.micro"
+database_allocated_storage = 20
+
+# ECS 配置
+backend_cpu = 512          # 0.5 vCPU
+backend_memory = 1024      # 1 GB
+backend_desired_count = 1
+
+frontend_cpu = 256         # 0.25 vCPU
+frontend_memory = 512      # 0.5 GB
+frontend_desired_count = 1
+
+# Auto Scaling 配置
+min_capacity = 1
+max_capacity = 10
+
+# 网络配置
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# 域名和证书（可选）
+# domain_name = "example.com"
+# certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/xxxxx"
+
+# 标签
+tags = {
+  Project     = "simple-devops"
+  ManagedBy   = "terraform"
+  Environment = "dev"
+  Owner       = "your-team"
+}
+

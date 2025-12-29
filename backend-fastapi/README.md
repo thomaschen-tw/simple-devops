@@ -28,11 +28,21 @@
 ```bash
 # 安装 uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
-export PATH="$HOME/.local/bin:$PATH"
+
+# 添加到 PATH（永久）
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# 验证 uv 安装
+which uv
+uv --version
 
 # 安装 Python 3.13
 uv python install 3.13
 ```
+
+**⚠️ 如果遇到 `command not found: uv`**：
+- 查看 [故障排查指南](TROUBLESHOOTING.md)
 
 ### 2. 安装依赖
 
