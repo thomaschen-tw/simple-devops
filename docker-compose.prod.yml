@@ -1,41 +1,41 @@
 # 生产环境 Docker Compose 配置
 # 使用 GitHub Actions 构建并推送到 GHCR 的镜像
-# 使用方法：docker-compose -f docker-compose.prod.yml up -d
+# 使用方法：make prod-deploy 或 docker-compose -f docker-compose.prod.yml up -d
+# 注意：需要先在 .env 文件中配置 GITHUB_USERNAME 和 GITHUB_REPO
 
 services:
   postgres:
     image: postgres:15-alpine
     container_name: blog-postgres
     environment:
-      POSTGRES_USER: demo
-      POSTGRES_PASSWORD: demo
-      POSTGRES_DB: demo
+      POSTGRES_USER: ${POSTGRES_USER:-demo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-demo}
+      POSTGRES_DB: ${POSTGRES_DB:-demo}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U demo"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-demo}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   backend:
-    # 替换 YOUR_GITHUB_USERNAME 和 YOUR_REPO 为你的实际 GitHub 用户名和仓库名
-    # GitHub Actions 会自动构建镜像为: ghcr.io/username/repo/backend:latest
-    # 例如：image: ghcr.io/thomaschen-tw/simple-devops/backend:latest
-    #image: ghcr.io/YOUR_GITHUB_USERNAME/YOUR_REPO/backend:latest
-    image: ghcr.io/thomaschen-tw/simple-devops/backend:latest
+    # 从环境变量读取 GitHub 用户名和仓库名
+    # 镜像格式: ghcr.io/${GITHUB_USERNAME}/${GITHUB_REPO}/backend:latest
+    # 如果未设置环境变量，使用默认值（需要手动修改）
+    image: ${BACKEND_IMAGE:-ghcr.io/${GITHUB_USERNAME:-YOUR_GITHUB_USERNAME}/${GITHUB_REPO:-YOUR_REPO}/backend:latest}
     container_name: blog-backend
     # 多平台支持：GitHub Actions 现在构建 amd64 + arm64 镜像
     # 在 Apple Silicon 上会自动使用 arm64 镜像，无需模拟
     # platform: linux/amd64  # 注释掉，让 Docker 自动选择
     environment:
-      # 数据库连接自动配置，无需手动 export
-      DATABASE_URL: postgresql+psycopg://demo:demo@postgres:5432/demo
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://demo:demo@postgres:5432/demo}
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/webhook-test/new-ticket}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,17 +49,16 @@ services:
       start_period: 40s  # 给启动脚本足够时间初始化数据库
 
   frontend:
-    # 替换 YOUR_GITHUB_USERNAME 和 YOUR_REPO 为你的实际 GitHub 用户名和仓库名
-    # GitHub Actions 会自动构建镜像为: ghcr.io/username/repo/frontend:latest
-    # 例如：image: ghcr.io/thomaschen-tw/simple-devops/frontend:latest
-    #image: ghcr.io/YOUR_GITHUB_USERNAME/YOUR_REPO/frontend:latest
-    image: ghcr.io/thomaschen-tw/simple-devops/frontend:latest
+    # 从环境变量读取 GitHub 用户名和仓库名
+    # 镜像格式: ghcr.io/${GITHUB_USERNAME}/${GITHUB_REPO}/frontend:latest
+    # 如果未设置环境变量，使用默认值（需要手动修改）
+    image: ${FRONTEND_IMAGE:-ghcr.io/${GITHUB_USERNAME:-YOUR_GITHUB_USERNAME}/${GITHUB_REPO:-YOUR_REPO}/frontend:latest}
     container_name: blog-frontend
     # 多平台支持：GitHub Actions 现在构建 amd64 + arm64 镜像
     # 在 Apple Silicon 上会自动使用 arm64 镜像，无需模拟
     # platform: linux/amd64  # 注释掉，让 Docker 自动选择
     ports:
-      - "5173:80"
+      - "${FRONTEND_PORT:-5173}:80"
     depends_on:
       backend:
         condition: service_healthy

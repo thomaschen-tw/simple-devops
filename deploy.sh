@@ -1,7 +1,7 @@
 #!/bin/bash
-# 一键部署脚本
+# 一键部署脚本（已整合到 Makefile，建议使用 make prod-deploy）
 # 使用方法: ./deploy.sh [你的GitHub用户名] [你的仓库名]
-# 例如: ./deploy.sh xiaotongchen simple-devops
+# 或者: 在 .env 文件中设置 GITHUB_USERNAME 和 GITHUB_REPO，然后运行 make prod-deploy
 
 set -e
 
@@ -11,16 +11,30 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# 检查参数
-if [ -z "$1" ] || [ -z "$2" ]; then
-    echo -e "${RED}❌ 错误: 请提供 GitHub 用户名和仓库名${NC}"
-    echo "使用方法: ./deploy.sh <GitHub用户名> <仓库名>"
-    echo "例如: ./deploy.sh xiaotongchen simple-devops"
-    exit 1
+# 加载 .env 文件（如果存在）
+if [ -f .env ]; then
+    export $(cat .env | grep -v '^#' | xargs)
 fi
 
-GITHUB_USER=$1
-REPO_NAME=$2
+# 检查参数或环境变量
+if [ -z "$1" ] || [ -z "$2" ]; then
+    if [ -z "$GITHUB_USERNAME" ] || [ -z "$GITHUB_REPO" ]; then
+        echo -e "${RED}❌ 错误: 请提供 GitHub 用户名和仓库名${NC}"
+        echo "使用方法:"
+        echo "  1. ./deploy.sh <GitHub用户名> <仓库名>"
+        echo "  2. 或在 .env 文件中设置 GITHUB_USERNAME 和 GITHUB_REPO，然后运行: make prod-deploy"
+        echo ""
+        echo "例如: ./deploy.sh xiaotongchen simple-devops"
+        exit 1
+    else
+        GITHUB_USER=$GITHUB_USERNAME
+        REPO_NAME=$GITHUB_REPO
+    fi
+else
+    GITHUB_USER=$1
+    REPO_NAME=$2
+fi
+
 REGISTRY="ghcr.io"
 BACKEND_IMAGE="${REGISTRY}/${GITHUB_USER}/${REPO_NAME}/backend:latest"
 FRONTEND_IMAGE="${REGISTRY}/${GITHUB_USER}/${REPO_NAME}/frontend:latest"
@@ -58,20 +72,18 @@ docker pull ${FRONTEND_IMAGE} || {
     exit 1
 }
 
-# 创建临时 docker-compose 文件
-COMPOSE_FILE="docker-compose.prod.${GITHUB_USER}.${REPO_NAME}.yml"
-sed "s|YOUR_GITHUB_USERNAME|${GITHUB_USER}|g; s|YOUR_REPO|${REPO_NAME}|g" docker-compose.prod.yml > ${COMPOSE_FILE}
-
 echo -e "${GREEN}✅ 镜像拉取完成${NC}"
 echo ""
 
 # 停止旧容器（如果存在）
 echo -e "${YELLOW}🛑 停止旧容器...${NC}"
-docker compose -f ${COMPOSE_FILE} down 2>/dev/null || true
+BACKEND_IMAGE=${BACKEND_IMAGE} FRONTEND_IMAGE=${FRONTEND_IMAGE} \
+    docker compose -f docker-compose.prod.yml down 2>/dev/null || true
 
 # 启动服务
 echo -e "${GREEN}🚀 启动服务...${NC}"
-docker compose -f ${COMPOSE_FILE} up -d
+BACKEND_IMAGE=${BACKEND_IMAGE} FRONTEND_IMAGE=${FRONTEND_IMAGE} \
+    docker compose -f docker-compose.prod.yml up -d
 
 # 等待服务就绪
 echo -e "${YELLOW}⏳ 等待服务启动...${NC}"
@@ -79,7 +91,7 @@ sleep 5
 
 # 检查服务状态
 echo -e "${GREEN}📊 服务状态:${NC}"
-docker compose -f ${COMPOSE_FILE} ps
+docker compose -f docker-compose.prod.yml ps
 
 echo ""
 echo -e "${GREEN}✅ 部署完成！${NC}"
@@ -91,8 +103,10 @@ echo "  📖 API 文档: http://localhost:8000/docs"
 echo "  ❤️  健康检查: http://localhost:8000/healthz"
 echo ""
 echo "管理命令:"
-echo "  查看日志: docker compose -f ${COMPOSE_FILE} logs -f"
-echo "  停止服务: docker compose -f ${COMPOSE_FILE} down"
-echo "  重启服务: docker compose -f ${COMPOSE_FILE} restart"
+echo "  查看日志: docker compose -f docker-compose.prod.yml logs -f"
+echo "  停止服务: docker compose -f docker-compose.prod.yml down"
+echo "  重启服务: docker compose -f docker-compose.prod.yml restart"
+echo ""
+echo -e "${YELLOW}💡 提示: 建议使用 Makefile 管理服务: make prod-up, make prod-down, make logs$(NC)"
 echo ""
 

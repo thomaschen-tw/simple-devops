@@ -1,10 +1,10 @@
-# Simple Blog (React + Vite + FastAPI + Postgres + Docker + K8s + CI/CD)
+# Simple Blog (React + Vite + FastAPI + Postgres + Docker + CI/CD)
 
 ## 架构与目录
 - 前端 `frontend-react`：React + Vite，打包后静态资源由 Nginx 提供。
 - 后端 `backend-fastapi`：FastAPI + SQLAlchemy，提供 `/search` 与 `/posts`。
 - 数据库：Postgres。
-- 基础设施：Dockerfile（前后端）、docker-compose（本地多容器）、K8s manifests（kind），GitHub Actions（CI + GHCR 推送）。
+- 基础设施：Dockerfile（前后端）、docker-compose（本地多容器），GitHub Actions（CI + GHCR 推送）。
 
 目录速览：
 - `backend-fastapi/app/main.py`：FastAPI 入口，CORS、路由注册、健康检查。
@@ -17,7 +17,8 @@
 - `docker-compose.yml`：本地开发环境（构建镜像）。
 - `docker-compose.prod.yml`：生产环境（使用 GHCR 镜像）。
 - `deploy.sh`：一键部署脚本。
-- `k8s/*.yaml`：kind 部署所需 namespace、Postgres、后端、前端。
+- `Makefile`：统一管理常用命令（推荐使用）。
+- `.env.example`：环境变量配置模板。
 - `.github/workflows/*.yml`：CI 构建、推送镜像到 GHCR。
 
 ## 🚀 一键部署（推荐 - 使用 GitHub Actions 构建的镜像）
@@ -207,26 +208,29 @@ docker build -t blog-frontend:local ./frontend-react --build-arg VITE_API_BASE_U
 - `frontend.yml`：构建 Vite 产物、构建并推送镜像到 GHCR（`ghcr.io/<owner>/<repo>/frontend`）。
 - 使用默认 `GITHUB_TOKEN` 推送；替换 `<owner>/<repo>` 为你的仓库路径（或在 workflow 中利用 `${{ github.repository }}` 已自动拼接）。
 
-## kind + K8s 部署
-1) 创建 kind 集群并映射 NodePort：
+## 使用 Makefile（推荐）
+
+项目提供了 Makefile 来简化常用操作：
+
 ```bash
-kind create cluster --name blog --config k8s/kind-config.yaml
+# 初始化项目（创建 .env 文件）
+make install
+
+# 启动开发环境
+make up
+
+# 查看所有可用命令
+make help
 ```
-2) 应用 namespace 与资源（先替换镜像占位符 `ghcr.io/OWNER/REPO` 为实际仓库或使用 `kubectl set image` 更新）：
-```bash
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/postgres.yaml
-kubectl apply -f k8s/backend.yaml
-kubectl apply -f k8s/frontend.yaml
-```
-3) 访问：前端 NodePort `http://localhost:30080`；后端 ClusterIP 可通过 `kubectl port-forward svc/backend -n blog 8000:8000`。
+
+更多信息请参考 [MAKEFILE_GUIDE.md](./MAKEFILE_GUIDE.md)。
 
 ## 技术要点与学习提示
 - FastAPI + SQLAlchemy：见 `app/models.py` 和 `app/routes.py`，包含依赖注入、会话管理、ILike 搜索和 Pydantic schema。
 - 数据填充：`seed_db.py` 采用 UTC 时间和批量插入示例，方便搜索验证。
 - 测试：`tests/test_health.py` 演示使用 TestClient 做接口探测，可照此扩展。
 - 前端：`src/pages/SearchPage.jsx` / `CreatePage.jsx` 展示受控表单、加载态与错误提示；`src/api.js` 使用统一 fetch 封装。
-- 部署：Dockerfile 分层构建；docker-compose 一键联调；K8s manifests 提供最小可用部署；GH Actions 自动化测试与镜像推送。
+- 部署：Dockerfile 分层构建；docker-compose 一键联调；GH Actions 自动化测试与镜像推送。
 
 ## 后续可扩展方向
 - 增加分页、标签、作者字段与鉴权。

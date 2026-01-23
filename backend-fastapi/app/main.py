@@ -21,7 +21,6 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",      # Vite 开发服务器
         "http://127.0.0.1:5173",      # Vite 开发服务器（备用）
-        "http://localhost:30080",     # K8s NodePort
     ],
     allow_credentials=True,
     allow_methods=["*"],

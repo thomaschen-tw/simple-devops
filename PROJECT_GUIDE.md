@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-这是一个前后端分离的个人博客项目，展示了从开发到部署的完整 DevOps 流程。项目使用 React + Vite 作为前端，FastAPI + PostgreSQL 作为后端，并包含 Docker、Kubernetes 和 CI/CD 的完整实践。
+这是一个前后端分离的个人博客项目，展示了从开发到部署的完整 DevOps 流程。项目使用 React + Vite 作为前端，FastAPI + PostgreSQL 作为后端，并包含 Docker 和 CI/CD 的完整实践。
 
 ## 架构设计
 
@@ -12,7 +12,6 @@
 - **后端**: FastAPI + SQLAlchemy + psycopg3
 - **数据库**: PostgreSQL 15
 - **容器化**: Docker + Docker Compose
-- **编排**: Kubernetes (kind)
 - **CI/CD**: GitHub Actions + GHCR
 
 ### 项目结构
@@ -45,12 +44,6 @@ simple-devops/
 │   ├── Dockerfile          # 前端镜像构建文件（多阶段构建）
 │   ├── nginx.conf          # Nginx 配置
 │   └── package.json        # Node.js 依赖
-├── k8s/                    # Kubernetes 配置
-│   ├── namespace.yaml      # 命名空间
-│   ├── postgres.yaml       # PostgreSQL 部署
-│   ├── backend.yaml        # 后端部署
-│   ├── frontend.yaml        # 前端部署
-│   └── kind-config.yaml    # Kind 集群配置
 ├── .github/workflows/      # GitHub Actions
 │   ├── backend.yml         # 后端 CI/CD
 │   ├── frontend.yml        # 前端 CI/CD
@@ -59,6 +52,8 @@ simple-devops/
 ├── docker-compose.yml      # 本地开发环境
 ├── docker-compose.prod.yml # 生产环境（使用 GHCR 镜像）
 ├── deploy.sh               # 一键部署脚本
+├── Makefile                # 统一命令管理
+├── .env.example            # 环境变量配置模板
 └── README.md               # 项目说明
 
 ```
@@ -86,7 +81,7 @@ simple-devops/
 **设计思路**:
 - 使用 SQLAlchemy ORM 定义数据模型
 - 使用 Pydantic 定义请求/响应模型
-- 环境变量配置数据库连接（支持 Docker/K8s）
+- 环境变量配置数据库连接（支持 Docker）
 - 使用 psycopg3 驱动（纯二进制，无需编译）
 
 **关键组件**:
@@ -149,7 +144,7 @@ simple-devops/
 **设计思路**:
 - 统一管理 API 基础地址（通过环境变量配置）
 - 封装 fetch 调用，统一错误处理
-- 支持不同环境（开发/Docker/K8s）
+- 支持不同环境（开发/生产）
 
 **关键函数**:
 - `searchArticles(query)` - 搜索文章
@@ -267,22 +262,6 @@ simple-devops/
 - 只更新文档时不触发前后端构建
 - 节省 CI 资源
 - 显示更新的文档列表
-
-### Kubernetes 配置
-
-#### `k8s/` 目录
-**作用**: Kubernetes 部署配置
-**设计思路**:
-- 使用 Kind 本地 K8s 集群
-- 分离配置：namespace、数据库、后端、前端
-- 使用 NodePort 暴露服务（前端 30080）
-
-**关键文件**:
-- `namespace.yaml` - 创建独立的命名空间
-- `postgres.yaml` - PostgreSQL StatefulSet + Service
-- `backend.yaml` - 后端 Deployment + Service
-- `frontend.yaml` - 前端 Deployment + Service + NodePort
-- `kind-config.yaml` - Kind 集群配置（端口映射）
 
 ## 数据流设计
 
@@ -441,7 +420,6 @@ docker compose -f docker-compose.prod.yml up -d
 ### 4. 健康检查
 - 后端：`/healthz` 端点
 - Docker Compose：`healthcheck` 配置
-- Kubernetes：`livenessProbe` 和 `readinessProbe`
 
 ### 5. 自动初始化
 - 启动脚本自动检测并初始化数据库
@@ -486,7 +464,7 @@ docker compose -f docker-compose.prod.yml up -d
 - 使用 Alembic 进行数据库迁移
 - 添加 Redis 缓存
 - 添加 Elasticsearch 全文搜索
-- 使用 Helm Chart 管理 K8s 部署
+- 添加 Kubernetes 部署（可选）
 
 ### 监控和日志
 - 集成 Prometheus 监控
@@ -499,7 +477,6 @@ docker compose -f docker-compose.prod.yml up -d
 - ✅ 前后端分离架构
 - ✅ 容器化部署
 - ✅ CI/CD 自动化
-- ✅ Kubernetes 编排
 - ✅ 最佳实践应用
 
 每个文件都有其特定的作用，共同构成了一个可维护、可扩展、可部署的完整系统。

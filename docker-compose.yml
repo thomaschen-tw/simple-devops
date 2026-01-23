@@ -4,15 +4,15 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: demo
-      POSTGRES_PASSWORD: demo
-      POSTGRES_DB: demo
+      POSTGRES_USER: ${POSTGRES_USER:-demo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-demo}
+      POSTGRES_DB: ${POSTGRES_DB:-demo}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U demo"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-demo}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -21,21 +21,22 @@ services:
     build:
       context: ./backend-fastapi
     environment:
-      DATABASE_URL: postgresql+psycopg://demo:demo@postgres:5432/demo
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://demo:demo@postgres:5432/demo}
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/webhook-test/new-ticket}
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     # 启动脚本会自动检查并初始化数据库（如果为空）
 
   frontend:
     build:
       context: ./frontend-react
       args:
-        VITE_API_BASE_URL: http://backend:8000
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
     ports:
-      - "5173:80"
+      - "${FRONTEND_PORT:-5173}:80"
     depends_on:
       - backend
 

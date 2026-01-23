@@ -6,7 +6,6 @@ RUN npm install
 COPY . .
 # 注意：VITE_API_BASE_URL 默认值为 http://localhost:8000（在 api.js 中定义）
 # 浏览器通过 localhost 访问后端（不是容器服务名）
-# 对于 K8s，可通过运行时环境变量设置
 ARG VITE_API_BASE_URL=http://localhost:8000
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN npm run build

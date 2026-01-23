@@ -11,7 +11,7 @@ from sqlalchemy import Column, DateTime, Integer, String, Text, Enum as SQLEnum,
 import enum
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# 数据库连接字符串；可通过环境变量 DATABASE_URL 覆盖（用于 Docker/K8s）
+# 数据库连接字符串；可通过环境变量 DATABASE_URL 覆盖（用于 Docker）
 # 使用 psycopg3 驱动（连接字符串格式：postgresql+psycopg://）
 # 本地开发默认端口：5434（映射到容器内部 5432）
 DATABASE_URL = os.getenv(
