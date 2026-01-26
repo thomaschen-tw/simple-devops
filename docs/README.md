@@ -1,8 +1,33 @@
-# 项目工作文档索引
+# 📚 项目文档索引
 
-本目录包含项目的详细工作日志和总结文档。
+本目录包含项目的详细文档和工作日志。
 
-## 📚 文档结构
+## 📖 主要文档
+
+### 部署和运维
+- [部署指南](./DEPLOYMENT.md) - 本地开发和生产环境完整部署说明
+- [Makefile 使用指南](./MAKEFILE_GUIDE.md) - Makefile 命令详解和使用说明
+- [Makefile 学习指南](./MAKEFILE_LEARNING_GUIDE.md) - Makefile 设计和使用教程（从基础到高级）
+
+### 项目说明
+- [项目指南](./PROJECT_GUIDE.md) - 项目架构、设计思路和核心文件详解
+- [文件整理分析](./FILE_ORGANIZATION.md) - 文件整理和优化建议
+
+### 功能说明
+- [N8N 反馈功能](./N8N_FEEDBACK_FEATURE.md) - N8N 自动化反馈处理功能说明
+- [多平台构建](./MULTI_PLATFORM_BUILD.md) - Docker 多平台构建说明
+- [搜索排序说明](./SEARCH_SORT_EXPLANATION.md) - 搜索和排序功能说明
+
+### 技术文档
+- [Python 版本说明](./PYTHON_VERSION_CLARIFICATION.md) - Python 3.13 和 uv 使用说明
+- [Docker Compose 对比](./DOCKER_COMPOSE_COMPARISON.md) - docker-compose.yml 和 docker-compose.prod.yml 对比
+- [Git 上传指南](./GIT_UPLOAD_GUIDE.md) - Git 使用和上传说明
+- [文档结构说明](./DOCUMENTATION_STRUCTURE.md) - 文档组织结构说明
+
+### 项目历史
+- [清理总结](./CLEANUP_SUMMARY.md) - k8s 和 terraform 清理工作总结
+
+## 📝 工作日志
 
 ### 周总结
 - [第1周总结](./week1.md) - Day 1-5 基础骨架与搜索功能
@@ -12,115 +37,47 @@
 
 #### 第1周
 - [Day 1](./day1.md) - 仓库初始化与项目骨架搭建
-  - 项目架构选择（FastAPI + React）
-  - 目录结构设计
-  - 遇到的问题：Python 包导入、端口配置、文档编写
-
 - [Day 2](./day2.md) - 数据库 Schema 设计与种子数据
-  - PostgreSQL 选择与 Schema 设计
-  - SQLAlchemy ORM vs 原生 SQL
-  - 遇到的问题：psycopg2 vs psycopg3、时区处理、表创建时机
-
 - [Day 3](./day3.md) - FastAPI 搜索接口实现与本地联调
-  - 路由组织方式（APIRouter）
-  - 搜索实现（ILIKE）
-  - 依赖注入设计
-  - 遇到的问题：CORS 错误、数据库会话管理、时区转换
-
 - [Day 4](./day4.md) - React 前端搜索页面实现
-  - 组件设计与状态管理
-  - API 封装设计
-  - 用户体验优化
-  - 遇到的问题：CORS 配置、API 地址配置、错误处理
-
 - [Day 5](./day5.md) - 创建文章接口与前端页面完善
-  - API 设计（POST /posts）
-  - 请求验证（Pydantic）
-  - 前端表单设计
-  - 遇到的问题：数据库事务、表单重复提交、页面导航
 
 #### 第2周
 - [Day 6](./day6.md) - Dockerfile 编写与多环境配置
-  - 多阶段构建策略
-  - 环境变量设计
-  - 启动脚本自动化
-  - 遇到的问题：psycopg3 编译、API 地址配置、数据库连接超时
-
 - [Day 7](./day7.md) - GitHub Actions CI/CD 配置
-  - CI/CD 策略选择
-  - 工作流设计（前后端独立）
-  - 多平台构建
-  - 遇到的问题：路径过滤、pytest 导入错误、GHCR 认证
-
 - [Day 8](./day8.md) - CI 测试集成与 K8s 部署配置
-  - 测试集成策略
-  - Kubernetes 部署配置
-  - 部署脚本自动化
-  - 遇到的问题：pytest 模块导入、镜像占位符、服务启动顺序
-
-## 📖 文档说明
-
-每份工作总结文档包含以下部分：
-
-1. **📋 工作内容** - 当天完成的具体任务
-2. **💭 思考过程** - 技术选型和设计决策的思考
-3. **🎨 设计要点** - 关键设计思路和实现细节
-4. **⚠️ 遇到的问题** - 开发过程中遇到的具体问题
-5. **✅ 解决方案总结** - 问题的解决方案
-6. **📚 学到的经验** - 经验总结和最佳实践
 
 ## 🔍 快速查找
 
 ### 按主题查找
 
-**后端开发**
-- Day 1: 项目骨架
-- Day 2: 数据库设计
-- Day 3: API 接口实现
-- Day 5: 创建接口
+**部署相关**
+- 快速部署: [部署指南](./DEPLOYMENT.md)
+- Makefile: [Makefile 使用指南](./MAKEFILE_GUIDE.md)
+- Docker: [Docker Compose 对比](./DOCKER_COMPOSE_COMPARISON.md)
 
-**前端开发**
-- Day 1: 项目骨架
-- Day 4: 搜索页面
-- Day 5: 创建页面
+**开发相关**
+- 项目架构: [项目指南](./PROJECT_GUIDE.md)
+- Python 环境: [Python 版本说明](./PYTHON_VERSION_CLARIFICATION.md)
+- 功能说明: [N8N 反馈功能](./N8N_FEEDBACK_FEATURE.md)
 
-**DevOps**
-- Day 6: Docker 配置
-- Day 7: CI/CD 配置
-- Day 8: K8s 部署
-
-### 按问题查找
-
-**数据库相关**
-- Day 2: psycopg2 vs psycopg3
-- Day 2: 时区处理
-- Day 3: 数据库会话管理
-- Day 6: 数据库连接超时
-
-**前后端通信**
-- Day 3: CORS 配置
-- Day 4: API 地址配置
-- Day 6: 前端 API 地址配置
-
-**CI/CD 相关**
-- Day 7: 路径过滤
-- Day 7: 多平台构建
-- Day 8: pytest 导入错误
+**历史记录**
+- 开发过程: [工作日志](./week1.md), [week2.md](./week2.md)
+- 清理工作: [清理总结](./CLEANUP_SUMMARY.md)
 
 ## 💡 使用建议
 
-1. **新成员入门**：按顺序阅读 Day 1-8，了解项目演进过程
-2. **解决问题**：根据遇到的问题，查找对应的解决方案
-3. **学习参考**：参考设计思路和最佳实践，应用到其他项目
-4. **经验总结**：每份文档都有"学到的经验"部分，值得反复阅读
+1. **新成员入门**: 先阅读 [部署指南](./DEPLOYMENT.md) 和 [项目指南](./PROJECT_GUIDE.md)
+2. **部署问题**: 查看 [部署指南](./DEPLOYMENT.md) 的故障排查部分
+3. **了解历史**: 阅读工作日志了解项目演进过程
+4. **学习参考**: 参考设计思路和最佳实践
 
-## 📝 更新说明
+## 📝 文档说明
 
-这些文档记录了项目的开发过程，包括：
+这些文档记录了项目的：
 - 技术选型的思考过程
 - 设计决策的原因
 - 遇到的问题和解决方案
 - 学到的经验和最佳实践
 
 希望这些文档能帮助团队成员更好地理解项目，也希望能为其他开发者提供参考。
-

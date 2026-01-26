@@ -1,240 +1,324 @@
 # Simple Blog (React + Vite + FastAPI + Postgres + Docker + CI/CD)
 
-## 架构与目录
-- 前端 `frontend-react`：React + Vite，打包后静态资源由 Nginx 提供。
-- 后端 `backend-fastapi`：FastAPI + SQLAlchemy，提供 `/search` 与 `/posts`。
-- 数据库：Postgres。
-- 基础设施：Dockerfile（前后端）、docker-compose（本地多容器），GitHub Actions（CI + GHCR 推送）。
+一个前后端分离的个人博客项目，展示从开发到部署的完整 DevOps 流程。
 
-目录速览：
-- `backend-fastapi/app/main.py`：FastAPI 入口，CORS、路由注册、健康检查。
-- `backend-fastapi/app/routes.py`：搜索/创建接口。
-- `backend-fastapi/app/models.py`：SQLAlchemy 模型与 Pydantic schema。
-- `backend-fastapi/seed_db.py`：生成 100 条测试文章。
-- `backend-fastapi/tests/`：简单健康检查测试。
-- `frontend-react/src/pages/*`：搜索、创建页面。
-- `frontend-react/src/api.js`：统一 API 调用。
-- `docker-compose.yml`：本地开发环境（构建镜像）。
-- `docker-compose.prod.yml`：生产环境（使用 GHCR 镜像）。
-- `deploy.sh`：一键部署脚本。
-- `Makefile`：统一管理常用命令（推荐使用）。
-- `.env.example`：环境变量配置模板。
-- `.github/workflows/*.yml`：CI 构建、推送镜像到 GHCR。
+## 🚀 快速开始
 
-## 🚀 一键部署（推荐 - 使用 GitHub Actions 构建的镜像）
+### 方法一：使用 Makefile（推荐）
 
-**无需手动设置环境变量，自动配置数据库连接，自动初始化测试数据！**
+最简单的方式，一键启动所有服务：
 
-**✨ 自动初始化数据库：首次部署时会自动运行 `seed_db.py`，填充 100 条测试文章！**
-
-### 前提条件
-1. 确保 GitHub Actions 已成功构建并推送镜像到 GHCR
-2. 如果镜像是私有的，需要先登录 GHCR：
-   ```bash
-   echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
-   ```
-
-### 一键部署
 ```bash
-cd /Users/xiaotongchen/aiTools/simple-devops
+# 1. 初始化项目（创建 .env 文件）
+make install
 
-# 方法一：使用部署脚本（推荐）
-./deploy.sh YOUR_GITHUB_USERNAME YOUR_REPO_NAME
-# 例如: ./deploy.sh thomaschen-tw simple-devops
+# 2. 编辑 .env 文件配置环境变量（可选，有默认值）
+vim .env
 
-# 方法二：手动使用 docker-compose
-# 1. 编辑 docker-compose.prod.yml，替换 YOUR_GITHUB_USERNAME 和 YOUR_REPO
-# 2. 运行：
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d
+# 3. 启动开发环境（后台运行）
+make up
+
+# 4. 查看服务状态
+make ps
+
+# 5. 查看日志
+make logs
+
+# 生产环境部署
+make prod-deploy  # 或 ./deploy.sh YOUR_GITHUB_USERNAME YOUR_REPO_NAME
 ```
 
-部署完成后：
+访问服务：
 - 🌐 前端: http://localhost:5173
 - 🔧 后端 API: http://localhost:8000
 - 📖 API 文档: http://localhost:8000/docs
 - ❤️ 健康检查: http://localhost:8000/healthz
 
-**管理命令：**
+### 方法二：使用 Docker Compose
+
+使用 Docker Compose 启动所有服务（数据库、后端、前端）：
+
+#### 本地开发环境
+
 ```bash
-# 查看日志
-docker compose -f docker-compose.prod.yml logs -f
+# 1. 进入项目目录
+cd /Users/xiaotongchen/aiTools/simple-devops
 
-# 停止服务
-docker compose -f docker-compose.prod.yml down
+# 2. 启动所有服务（前台运行，可以看到日志）
+docker compose up
 
-# 重启服务
-docker compose -f docker-compose.prod.yml restart
+# 或者后台运行
+docker compose up -d
 
-# 查看状态
+# 3. 查看服务状态
+docker compose ps
+
+# 4. 查看日志
+docker compose logs -f              # 所有服务日志
+docker compose logs -f backend      # 后端日志
+docker compose logs -f frontend     # 前端日志
+docker compose logs -f postgres     # 数据库日志
+
+# 5. 停止服务
+docker compose down                 # 停止并删除容器
+docker compose down -v             # 停止并删除容器和数据卷（⚠️ 会删除数据库数据）
+```
+
+**说明**：
+- Docker Compose 会自动构建镜像（如果不存在）
+- 数据库端口映射为 `5433:5432`（宿主机:容器），避免与本地 PostgreSQL 冲突
+- 后端端口：`8000:8000`
+- 前端端口：`5173:80`
+- **首次启动会自动初始化数据库**，填充 100 条测试文章
+
+#### 生产环境部署
+
+```bash
+# 方法一：使用 Makefile（推荐）
+make prod-deploy
+
+# 方法二：使用部署脚本
+./deploy.sh YOUR_GITHUB_USERNAME YOUR_REPO_NAME
+
+# 方法三：手动部署
+# 1. 配置 .env 文件
+vim .env  # 设置 GITHUB_USERNAME 和 GITHUB_REPO
+
+# 2. 拉取镜像并启动
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+
+# 3. 查看状态
 docker compose -f docker-compose.prod.yml ps
 ```
 
-## 本地开发启动（docker-compose，使用 demo/demo 账号）
+### 方法三：本地命令行手动启动（开发调试）
 
-**✨ 自动初始化数据库：首次启动时会自动运行 `seed_db.py`，填充 100 条测试文章！**
+适合需要热重载和调试的开发场景。
+
+#### 前置准备
+
+1. **安装依赖工具**：
+   ```bash
+   # 安装 uv（Python 包管理器）
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   export PATH="$HOME/.local/bin:$PATH"
+   
+   # 安装 Node.js（如果还没有）
+   # macOS: brew install node
+   # 或访问 https://nodejs.org/ 下载安装
+   ```
+
+2. **启动 PostgreSQL 数据库**：
+
+   方式 A：使用 Docker（推荐）
+   ```bash
+   # 启动 PostgreSQL 容器
+   docker run -d --name demo-postgres \
+     -e POSTGRES_USER=demo \
+     -e POSTGRES_PASSWORD=demo \
+     -e POSTGRES_DB=demo \
+     -p 5433:5432 \
+     postgres:15-alpine
+   
+   # 验证数据库是否运行
+   docker ps | grep demo-postgres
+   ```
+
+   方式 B：使用本地 PostgreSQL
+   ```bash
+   # macOS: brew services start postgresql@15
+   # 或使用系统自带的 PostgreSQL
+   # 确保端口为 5433（或修改下面的连接字符串）
+   ```
+
+#### 启动后端服务
 
 ```bash
-cd /Users/xiaotongchen/aiTools/simple-devops
-docker compose up --build
-# 前端: http://localhost:5173
-# 后端: http://localhost:8000 (健康检查 /healthz)
-```
-
-说明：
-- 内置 Postgres 版本为 15-alpine，账号/密码/库均为 demo，宿主机映射端口 5433
-- 后端启动脚本会自动检测数据库是否为空，如果为空则自动运行 `seed_db.py` 初始化 100 条测试文章
-- 如果数据库已有数据，则跳过初始化，不会覆盖现有数据
-
-## 后端单独运行（本地开发，Python 3.13，使用 uv）
-
-**项目使用 uv 包管理器，Python 3.13 版本**
-
-### 方法一：使用 docker-compose（推荐，自动配置环境变量）
-```bash
-cd /Users/xiaotongchen/aiTools/simple-devops
-docker compose up backend postgres
-# 数据库连接自动配置，无需手动设置 DATABASE_URL
-```
-
-### 方法二：使用 uv（推荐，快速且自动管理虚拟环境）
-```bash
-# 1. 确保 Postgres 已启动
-docker start demo-postgres  # 或使用 docker-compose
-
-# 2. 进入后端目录
+# 1. 进入后端目录
 cd /Users/xiaotongchen/aiTools/simple-devops/backend-fastapi
 
-# 3. 安装 uv（如果还没有）
-curl -LsSf https://astral.sh/uv/install.sh | sh
-export PATH="$HOME/.local/bin:$PATH"
-
-# 4. 安装 Python 3.13 和依赖（自动创建虚拟环境）
+# 2. 安装 Python 3.13（如果还没有）
 uv python install 3.13
+
+# 3. 安装项目依赖（自动创建虚拟环境）
 uv sync
 
-# 5. 设置数据库连接
+# 4. 设置数据库连接环境变量
 export DATABASE_URL="postgresql+psycopg://demo:demo@localhost:5433/demo"
 
-# 6. 启动服务
+# 5. 初始化数据库（首次运行）
+# 创建表
+uv run python -c "from app.models import Base, engine; Base.metadata.create_all(bind=engine)"
+
+# 填充测试数据（如果数据库为空）
+uv run python seed_db.py
+
+# 6. 启动后端服务（开发模式，支持热重载）
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# 其他操作：
-# 生成 100 条测试文章
-uv run python seed_db.py
-# 运行测试
-uv run pytest -v
+# 或者使用传统方式
+# source .venv/bin/activate
+# uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 方法三：传统方式（使用 pip，不推荐）
-```bash
-# 注意：项目已迁移到 uv，此方法仅用于参考
-cd /Users/xiaotongchen/aiTools/simple-devops/backend-fastapi
-python3.13 -m venv .venv && source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt  # ⚠️ requirements.txt 已弃用
-export DATABASE_URL="postgresql+psycopg://demo:demo@localhost:5433/demo"
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+**验证后端**：
+- 访问 http://localhost:8000/healthz 应该返回 `{"status":"ok"}`
+- 访问 http://localhost:8000/docs 查看 API 文档
 
-**推荐使用方法二（uv）**，更快且自动管理虚拟环境。详细说明请参考 [uv 快速开始指南](backend-fastapi/QUICKSTART.md)。
+#### 启动前端服务
 
-## 前端单独运行（/frontend-react）
+**新开一个终端窗口**，执行：
+
 ```bash
+# 1. 进入前端目录
 cd /Users/xiaotongchen/aiTools/simple-devops/frontend-react
+
+# 2. 安装依赖（首次运行）
 npm install
+
+# 3. 启动开发服务器（支持热重载）
 npm run dev
-# 前端默认连接 http://localhost:8000
-# 若后端不在 localhost:8000，请创建 .env 文件：echo 'VITE_API_BASE_URL=http://your-backend-url:8000' > .env
+
+# 如果后端不在 localhost:8000，需要配置 API 地址
+# 创建 .env 文件：
+# echo 'VITE_API_BASE_URL=http://your-backend-url:8000' > .env
+# 然后重新运行 npm run dev
 ```
 
-**注意**：前端默认连接 `http://localhost:8000`，请确保后端已启动。
+**验证前端**：
+- 前端会在 http://localhost:5173 启动
+- 浏览器会自动打开，或手动访问 http://localhost:5173
 
-## 使用已有 Postgres 容器（非 compose）- 完整启动流程
+#### 完整启动流程总结
 
-### 1. 启动 Postgres 容器（如果还没启动）
 ```bash
+# 终端 1: 启动数据库
 docker run -d --name demo-postgres \
   -e POSTGRES_USER=demo -e POSTGRES_PASSWORD=demo -e POSTGRES_DB=demo \
   -p 5433:5432 postgres:15-alpine
-```
 
-### 2. 启动后端服务
-```bash
-# 进入 backend-fastapi 目录（必须！）
-cd /Users/xiaotongchen/aiTools/simple-devops/backend-fastapi
-
-# 激活虚拟环境（如果还没创建，先运行：python3.13 -m venv .venv）
-source .venv/bin/activate
-
-# 设置数据库连接（使用 psycopg3 驱动）
+# 终端 2: 启动后端
+cd backend-fastapi
+uv sync
 export DATABASE_URL="postgresql+psycopg://demo:demo@localhost:5433/demo"
+uv run python -c "from app.models import Base, engine; Base.metadata.create_all(bind=engine)"
+uv run python seed_db.py  # 首次运行
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# 启动服务（必须在 backend-fastapi 目录下运行）
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# 验证后端是否启动成功：访问 http://localhost:8000/healthz 应该返回 {"status":"ok"}
-```
-
-### 3. 启动前端服务（新开一个终端）
-```bash
-cd /Users/xiaotongchen/aiTools/simple-devops/frontend-react
-npm install  # 首次运行需要
+# 终端 3: 启动前端
+cd frontend-react
+npm install  # 首次运行
 npm run dev
-# 前端会在 http://localhost:5173 启动，自动连接后端 http://localhost:8000
 ```
 
-### 4. 验证连接
-- 前端：http://localhost:5173
-- 后端健康检查：http://localhost:8000/healthz
-- 后端 API 文档：http://localhost:8000/docs
+#### 常见问题排查
 
-如果前端仍然提示 "failed to fetch"，请检查：
-1. ✅ 后端是否在运行（访问 http://localhost:8000/healthz）
-2. ✅ 后端 CORS 配置是否允许 `http://localhost:5173`（已在代码中配置）
-3. ✅ 浏览器控制台是否有具体错误信息
-
-## Docker 镜像
-- 后端：`backend-fastapi/Dockerfile`（基于 python:3.13-slim，默认 psycopg3 连接 demo:demo@postgres:5432/demo）
-- 前端：`frontend-react/Dockerfile`（Node 构建 + Nginx 运行，默认 API 指向 http://backend:8000）
-构建示例：
+**后端无法连接数据库**：
 ```bash
-docker build -t blog-backend:local ./backend-fastapi
-docker build -t blog-frontend:local ./frontend-react --build-arg VITE_API_BASE_URL=http://localhost:8000
+# 检查数据库是否运行
+docker ps | grep demo-postgres
+
+# 检查端口是否正确
+lsof -i :5433
+
+# 测试数据库连接
+docker exec -it demo-postgres psql -U demo -d demo -c "SELECT 1;"
 ```
 
-## GitHub Actions（CI/CD）
-- `backend.yml`：安装依赖、运行 pytest、构建并推送镜像到 GHCR（`ghcr.io/<owner>/<repo>/backend`）。
-- `frontend.yml`：构建 Vite 产物、构建并推送镜像到 GHCR（`ghcr.io/<owner>/<repo>/frontend`）。
-- 使用默认 `GITHUB_TOKEN` 推送；替换 `<owner>/<repo>` 为你的仓库路径（或在 workflow 中利用 `${{ github.repository }}` 已自动拼接）。
+**前端无法连接后端**：
+- 确认后端正在运行：访问 http://localhost:8000/healthz
+- 检查浏览器控制台错误信息
+- 确认 CORS 配置正确（代码中已配置允许 localhost:5173）
 
-## 使用 Makefile（推荐）
+**端口冲突**：
+```bash
+# 检查端口占用
+lsof -i :8000  # 后端端口
+lsof -i :5173  # 前端端口
+lsof -i :5433  # 数据库端口
 
-项目提供了 Makefile 来简化常用操作：
+# 停止占用端口的进程或修改配置
+```
+
+## 📁 项目结构
+
+```
+simple-devops/
+├── backend-fastapi/      # 后端服务（FastAPI + SQLAlchemy）
+├── frontend-react/       # 前端服务（React + Vite）
+├── docs/                 # 详细文档
+├── docker-compose.yml    # 本地开发环境
+├── docker-compose.prod.yml # 生产环境
+├── Makefile              # 统一命令管理
+├── .env.example          # 环境变量模板
+└── README.md             # 本文件
+```
+
+## 🛠️ 技术栈
+
+- **前端**: React 18 + Vite + Nginx
+- **后端**: FastAPI + SQLAlchemy + psycopg3
+- **数据库**: PostgreSQL 15
+- **容器化**: Docker + Docker Compose
+- **CI/CD**: GitHub Actions + GHCR
+
+## 📚 文档
+
+详细文档请查看 [docs/](./docs/) 目录：
+
+- [部署指南](./docs/DEPLOYMENT.md) - 本地开发和生产环境部署说明
+- [Makefile 使用指南](./docs/MAKEFILE_GUIDE.md) - Makefile 命令详解
+- [项目指南](./docs/PROJECT_GUIDE.md) - 项目架构和设计说明
+- [工作日志](./docs/README.md) - 开发过程记录
+
+## 🔧 常用命令
 
 ```bash
-# 初始化项目（创建 .env 文件）
-make install
-
-# 启动开发环境
-make up
-
 # 查看所有可用命令
 make help
+
+# 开发环境
+make dev            # 启动开发环境
+make up             # 启动所有服务（后台）
+make down           # 停止所有服务
+make logs           # 查看日志
+
+# 生产部署
+make prod-deploy    # 生产环境部署
+make prod-up        # 启动生产环境
+make prod-down      # 停止生产环境
+
+# 数据库管理
+make db-shell       # 进入数据库命令行
+make db-reset       # 重置数据库
+make db-seed        # 填充测试数据
+
+# 测试
+make test           # 运行所有测试
 ```
 
-更多信息请参考 [MAKEFILE_GUIDE.md](./MAKEFILE_GUIDE.md)。
+## ✨ 特性
 
-## 技术要点与学习提示
-- FastAPI + SQLAlchemy：见 `app/models.py` 和 `app/routes.py`，包含依赖注入、会话管理、ILike 搜索和 Pydantic schema。
-- 数据填充：`seed_db.py` 采用 UTC 时间和批量插入示例，方便搜索验证。
-- 测试：`tests/test_health.py` 演示使用 TestClient 做接口探测，可照此扩展。
-- 前端：`src/pages/SearchPage.jsx` / `CreatePage.jsx` 展示受控表单、加载态与错误提示；`src/api.js` 使用统一 fetch 封装。
-- 部署：Dockerfile 分层构建；docker-compose 一键联调；GH Actions 自动化测试与镜像推送。
+- ✅ 自动数据库初始化（首次启动自动填充测试数据）
+- ✅ 环境变量配置（使用 .env 文件）
+- ✅ Docker Compose 一键部署
+- ✅ GitHub Actions CI/CD
+- ✅ Makefile 统一命令管理
+- ✅ 健康检查端点
+- ✅ API 文档自动生成
 
-## 后续可扩展方向
-- 增加分页、标签、作者字段与鉴权。
-- 引入 Alembic 迁移而非启动时自动建表。
-- 前端添加路由、全局状态、组件测试。
+## 📖 更多信息
 
+- **部署问题？** 查看 [部署指南](./docs/DEPLOYMENT.md)
+- **Makefile 使用？** 查看 [Makefile 指南](./docs/MAKEFILE_GUIDE.md)
+- **项目架构？** 查看 [项目指南](./docs/PROJECT_GUIDE.md)
+- **开发日志？** 查看 [工作日志](./docs/README.md)
 
+## 🤝 贡献
+
+欢迎提交 Issue 或 Pull Request！
+
+## 📄 许可证
+
+MIT License
