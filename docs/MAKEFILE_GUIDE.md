@@ -1,5 +1,7 @@
 # Makefile 和 .env 使用指南
 
+> **📘 深入学习**: 想了解 Makefile 的设计原理和高级用法？查看 [Makefile 学习指南](./MAKEFILE_LEARNING_GUIDE.md)
+
 本文档介绍如何使用 Makefile 和 .env 文件来简化项目的开发、部署和管理。
 
 ## 📋 目录

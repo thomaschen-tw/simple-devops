@@ -1,5 +1,7 @@
 # Makefile 学习指南
 
+> **🚀 快速参考**: 只想快速使用 Makefile 命令？查看 [Makefile 使用指南](./MAKEFILE_GUIDE.md)
+
 本文档详细介绍如何设计和使用 Makefile，以本项目为例，从基础到高级逐步讲解。
 
 ## 📋 目录

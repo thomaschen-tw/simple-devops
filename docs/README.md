@@ -1,6 +1,16 @@
 # 📚 项目文档索引
 
-本目录包含项目的详细文档和工作日志。
+本目录包含项目的详细文档，涵盖部署、开发、功能说明等各个方面。
+
+## 🎯 快速导航
+
+| 我想... | 查看文档 |
+|---------|----------|
+| **快速部署项目** | [部署指南](./DEPLOYMENT.md) |
+| **了解 Makefile 命令** | [Makefile 使用指南](./MAKEFILE_GUIDE.md) |
+| **学习 Makefile 设计** | [Makefile 学习指南](./MAKEFILE_LEARNING_GUIDE.md) |
+| **理解项目架构** | [项目指南](./PROJECT_GUIDE.md) |
+| **查看所有文档** | 继续阅读下文 ⬇️ |
 
 ## 📖 主要文档
 
@@ -24,28 +34,11 @@
 - [Git 上传指南](./GIT_UPLOAD_GUIDE.md) - Git 使用和上传说明
 - [文档结构说明](./DOCUMENTATION_STRUCTURE.md) - 文档组织结构说明
 
-### 项目历史
-- [清理总结](./CLEANUP_SUMMARY.md) - k8s 和 terraform 清理工作总结
+### 项目历史和元文档
+- [归档文档](./archive/) - 项目历史总结和工作日志
+- [文档优化总结](./DOCS_OPTIMIZATION_SUMMARY.md) - 2026-01-30 文档优化工作记录
 
-## 📝 工作日志
-
-### 周总结
-- [第1周总结](./week1.md) - Day 1-5 基础骨架与搜索功能
-- [第2周总结](./week2.md) - Day 6-10 本地 K8s 与 CI/CD 初版
-
-### 每日工作总结
-
-#### 第1周
-- [Day 1](./day1.md) - 仓库初始化与项目骨架搭建
-- [Day 2](./day2.md) - 数据库 Schema 设计与种子数据
-- [Day 3](./day3.md) - FastAPI 搜索接口实现与本地联调
-- [Day 4](./day4.md) - React 前端搜索页面实现
-- [Day 5](./day5.md) - 创建文章接口与前端页面完善
-
-#### 第2周
-- [Day 6](./day6.md) - Dockerfile 编写与多环境配置
-- [Day 7](./day7.md) - GitHub Actions CI/CD 配置
-- [Day 8](./day8.md) - CI 测试集成与 K8s 部署配置
+> **📦 历史文档**: 工作日志和历史总结已移至 [archive/](./archive/) 目录，以保持主文档目录的简洁性
 
 ## 🔍 快速查找
 
@@ -62,8 +55,8 @@
 - 功能说明: [N8N 反馈功能](./N8N_FEEDBACK_FEATURE.md)
 
 **历史记录**
-- 开发过程: [工作日志](./week1.md), [week2.md](./week2.md)
-- 清理工作: [清理总结](./CLEANUP_SUMMARY.md)
+- 开发过程: [归档工作日志](./archive/work-logs/)
+- 项目演进: [归档总结](./archive/)
 
 ## 💡 使用建议
 

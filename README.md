@@ -313,7 +313,8 @@ make test           # 运行所有测试
 - **部署问题？** 查看 [部署指南](./docs/DEPLOYMENT.md)
 - **Makefile 使用？** 查看 [Makefile 指南](./docs/MAKEFILE_GUIDE.md)
 - **项目架构？** 查看 [项目指南](./docs/PROJECT_GUIDE.md)
-- **开发日志？** 查看 [工作日志](./docs/README.md)
+- **所有文档？** 查看 [文档索引](./docs/README.md)
+- **开发历史？** 查看 [归档日志](./docs/archive/)
 
 ## 🤝 贡献
 
